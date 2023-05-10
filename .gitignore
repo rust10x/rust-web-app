@@ -1,0 +1,39 @@
+# By Default, Ignore any .*, except .gitignore
+.*
+!.gitignore
+
+# -- Rust
+# For .cargo/config.toml
+!.cargo/
+target/
+
+# For blueprint ignore Cargo.lock
+# (commit Cargo.lock for real project)
+Cargo.lock
+
+
+# -- Safety net
+dist/
+__pycache__/
+node_modules/
+npm-debug.log
+report.*.json
+
+*.parquet
+*.map
+*.zip
+*.gz
+*.tar
+*.tgz
+
+# videos
+*.mov
+*.mp4
+
+# images
+*.icns
+*.ico
+*.jpeg
+*.jpg
+*.gif
+*.png

@@ -1,0 +1,32 @@
+[package]
+name = "rust-web-app"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+authors = ["Jeremy Chone <jeremy.chone@gmail.com>"]
+license = "MIT OR Apache-2.0"
+description = "AwesomeApp rust-web-app."
+homepage="https://awesomeapp.dev"
+repository = "https://github.com/awesomeapp-dev/rust-web-app"
+
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+# -- Json
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_with = "3"
+# -- Web
+axum = "0.6"
+tower-http = { version = "0.4", features = ["fs"] }
+tower-cookies = "0.9"
+# -- Others
+uuid = {version = "1", features = ["v4","fast-rng",]}
+lazy-regex = "3"
+async-trait = "0.1"
+strum_macros = "0.25"
+
+
+[dev-dependencies]
+anyhow = "1"
+httpc-test = "0.1.1"
