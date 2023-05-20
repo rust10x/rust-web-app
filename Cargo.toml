@@ -20,6 +20,9 @@ serde_with = "3"
 axum = "0.6"
 tower-http = { version = "0.4", features = ["fs"] }
 tower-cookies = "0.9"
+# -- Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # -- Others
 uuid = {version = "1", features = ["v4","fast-rng",]}
 lazy-regex = "3"
