@@ -6,3 +6,15 @@
 
 # Scope down tracing, to filter out external lib tracing.
 RUST_LOG="rust_web_app=debug"
+
+# -- Service Environment Variables
+# IMPORTANT: 
+#   For cargo commands only.
+#   For deployed env, should be managed by container 
+#   (e.g., Kubernetes).
+
+## -- ConfigMap
+
+# This will be relative to Cargo.toml
+# In deployed images, probably use absolute path.
+SERVICE_WEB_FOLDER="web-folder/"
