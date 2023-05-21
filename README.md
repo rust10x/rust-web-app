@@ -11,7 +11,9 @@ More info at: https://awesomeapp.dev/rust-web-app/
 
 ```sh
 # Start postgresql server docker image:
-docker run --rm --name pg -p 5432:5432  -e POSTGRES_PASSWORD=welcome  postgres:15
+docker run --rm --name pg -p 5432:5432 \
+   -e POSTGRES_PASSWORD=welcome \
+   postgres:15
 
 # (optional) To have a psql terminal on pg. 
 # In another terminal (tab) run psql:
