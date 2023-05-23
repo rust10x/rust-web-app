@@ -13,6 +13,13 @@ RUST_LOG="rust_web_app=debug"
 #   For deployed env, should be managed by container 
 #   (e.g., Kubernetes).
 
+## -- Secrets
+# Keys and passwords below are for localhost dev ONLY.
+# e.g., "welcome" type of passwords.
+# i.e., Encryption not needed.
+
+SERVICE_DB_URL="postgres://app_user:dev_only_pwd@localhost/app_db"
+
 ## -- ConfigMap
 
 # This will be relative to Cargo.toml

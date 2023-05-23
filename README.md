@@ -24,7 +24,7 @@ docker exec -it -u postgres pg psql
 ALTER DATABASE postgres SET log_statement = 'all';
 ```
 
-## Dev (REPL)
+## Dev (watch)
 
 > NOTE: Install cargo watch with `cargo install cargo-watch`.
 
@@ -36,7 +36,7 @@ cargo watch -q -c -w src/ -w .cargo/ -x "run"
 cargo watch -q -c -w examples/ -x "run --example quick_dev"
 ```
 
-## Unit Test (REPL)
+## Unit Test (watch)
 
 ```sh
 cargo watch -q -c -x "test -- --nocapture"
