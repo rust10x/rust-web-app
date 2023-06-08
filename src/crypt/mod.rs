@@ -2,6 +2,7 @@
 
 mod error;
 pub mod pwd;
+pub mod token;
 
 pub use self::error::{Error, Result};
 
