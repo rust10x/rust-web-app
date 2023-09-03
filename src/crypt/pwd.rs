@@ -4,7 +4,7 @@ use crate::crypt::{encrypt_into_b64u, EncryptContent};
 
 /// Encrypt the password with the default scheme.
 pub fn encrypt_pwd(enc_content: &EncryptContent) -> Result<String> {
-	let key = &config().PWD_KEY;
+	let key = &config().pwd_key;
 
 	let encrypted = encrypt_into_b64u(key, enc_content)?;
 

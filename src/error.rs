@@ -1,12 +1,13 @@
 use crate::model;
+use std::borrow::Cow;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum Error {
 	// -- Config
-	ConfigMissingEnv(&'static str),
-	ConfigWrongFormat(&'static str),
+	ConfigMissingEnv(Cow<'static, str>),
+	ConfigWrongFormat(Cow<'static, str>),
 
 	// -- Modules
 	Model(model::Error),

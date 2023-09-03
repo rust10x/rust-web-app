@@ -55,12 +55,12 @@ impl Display for Token {
 
 pub fn generate_web_token(user: &str, salt: &str) -> Result<Token> {
 	let config = &config();
-	_generate_token(user, config.TOKEN_DURATION_SEC, salt, &config.TOKEN_KEY)
+	_generate_token(user, config.token_duration_sec, salt, &config.token_key)
 }
 
 pub fn validate_web_token(origin_token: &Token, salt: &str) -> Result<()> {
 	let config = &config();
-	_validate_token_sign_and_exp(origin_token, salt, &config.TOKEN_KEY)?;
+	_validate_token_sign_and_exp(origin_token, salt, &config.token_key)?;
 
 	Ok(())
 }
@@ -187,7 +187,7 @@ mod tests {
 		let fx_user = "user_one";
 		let fx_salt = "pepper";
 		let fx_duration_sec = 0.02; // 20ms
-		let token_key = &config().TOKEN_KEY;
+		let token_key = &config().token_key;
 		let fx_token =
 			_generate_token(fx_user, fx_duration_sec, fx_salt, token_key)?;
 
@@ -207,7 +207,7 @@ mod tests {
 		let fx_user = "user_one";
 		let fx_salt = "pepper";
 		let fx_duration_sec = 0.01; // 10ms
-		let token_key = &config().TOKEN_KEY;
+		let token_key = &config().token_key;
 		let fx_token =
 			_generate_token(fx_user, fx_duration_sec, fx_salt, token_key)?;
 
