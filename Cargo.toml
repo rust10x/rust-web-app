@@ -1,6 +1,6 @@
 [package]
 name = "rust-web-app"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.70"
 authors = ["Jeremy Chone <jeremy.chone@gmail.com>"]
@@ -21,8 +21,8 @@ axum = "0.6"
 tower-http = { version = "0.4", features = ["fs"] }
 tower-cookies = "0.9"
 # -- Data
-sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "postgres", "uuid", "time" ] }
-sqlb = "0.3" # Optional
+sqlx = { version = "0.7", features = [ "runtime-tokio-rustls", "postgres", "uuid", "time" ] }
+sqlb = "0.4"
 # -- Tracing
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
