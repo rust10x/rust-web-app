@@ -1,6 +1,6 @@
 [package]
 name = "rust-web-app"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 rust-version = "1.70"
 authors = ["Jeremy Chone <jeremy.chone@gmail.com>"]
@@ -30,7 +30,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 rand = "0.8"
 hmac = "0.12"
 sha2 = "0.10"
-base64-url = "2"
+base64 = "0.21"
 # -- Others
 uuid = {version = "1", features = ["v4","fast-rng",]}
 time = "0.3"
