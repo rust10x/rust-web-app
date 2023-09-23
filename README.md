@@ -1,6 +1,6 @@
-# AwesomeApp rust-web-app
+# Rust10x Web App Blueprint for Production Coding
 
-More info at: https://awesomeapp.dev/rust-web-app/
+More info at: https://rust10x.com/web-app
 
 - rust-web-app YouTube episodes:
 	- [Episode 01 - Rust Web App - Course to Production Coding](https://youtube.com/watch?v=3cA_mk4vdWY&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
@@ -62,3 +62,12 @@ cargo test -- --nocapture
 
 cargo watch -q -c -x test model::task::tests::test_create -- --nocapture
 ```
+
+<br />
+
+---
+
+More resources for [Rust for Production Coding](https://rust10x.com)
+
+
+[This repo on GitHub](https://github.com/rust10x/rust-web-app)
