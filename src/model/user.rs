@@ -3,8 +3,10 @@ use crate::ctx::Ctx;
 use crate::model::base::{self, DbBmc};
 use crate::model::ModelManager;
 use crate::model::{Error, Result};
+use sea_query::{Expr, PostgresQueryBuilder, Query};
+use sea_query_binder::SqlxBinder;
 use serde::{Deserialize, Serialize};
-use sqlb::{Fields, HasFields};
+use sqlb::{Fields, HasFields, SIden};
 use sqlx::postgres::PgRow;
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -80,13 +82,19 @@ impl UserBmc {
 	{
 		let db = mm.db();
 
-		let user = sqlb::select()
-			.table(Self::TABLE)
-			.and_where("username", "=", username)
-			.fetch_optional::<_, E>(db)
+		// -- Build query
+		let (sql, values) = Query::select()
+			.from(SIden(Self::TABLE))
+			.columns(E::field_idens())
+			.and_where(Expr::col(SIden("username")).eq(username))
+			.build_sqlx(PostgresQueryBuilder);
+
+		// -- Execute query
+		let entity = sqlx::query_as_with::<_, E, _>(&sql, values)
+			.fetch_optional(db)
 			.await?;
 
-		Ok(user)
+		Ok(entity)
 	}
 
 	pub async fn update_pwd(
@@ -97,18 +105,28 @@ impl UserBmc {
 	) -> Result<()> {
 		let db = mm.db();
 
+		// -- Prep password
 		let user: UserForLogin = Self::get(ctx, mm, id).await?;
 		let pwd = pwd::encrypt_pwd(&EncryptContent {
 			content: pwd_clear.to_string(),
 			salt: user.pwd_salt.to_string(),
 		})?;
 
-		sqlb::update()
-			.table(Self::TABLE)
-			.and_where("id", "=", id)
-			.data(vec![("pwd", pwd.to_string()).into()])
-			.exec(db)
-			.await?;
+		// -- Build query
+		let fields = [(SIden("pwd"), pwd.into())];
+		let (sql, values) = Query::update()
+			.table(SIden(Self::TABLE))
+			.values(fields)
+			.and_where(Expr::col(SIden("id")).eq(id))
+			.build_sqlx(PostgresQueryBuilder);
+
+		// -- Execute query
+		let count = sqlx::query_with(&sql, values)
+			.execute(db)
+			.await?
+			.rows_affected();
+
+		// TODO - should check that 1 was updated
 
 		Ok(())
 	}

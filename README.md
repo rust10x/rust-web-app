@@ -1,3 +1,10 @@
+# WARNING - THIS BRANCH (nx-e02-tmp) IS A TEMPORARY BRANCH 
+
+- This branch is being prepared for the next episode of the [rust10x web-app production blueprint](https://rust10x/web-app).
+- Once the episode is released:
+	- The `main` branch will be updated with the corresponding chapter commits (which will not originate from this branch, but will have the same end code).
+	- This branch will be deleted.
+
 # Rust10x Web App Blueprint for Production Coding
 
 More info at: https://rust10x.com/web-app

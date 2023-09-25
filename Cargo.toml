@@ -21,8 +21,10 @@ axum = "0.6"
 tower-http = { version = "0.4", features = ["fs"] }
 tower-cookies = "0.9"
 # -- Data
-sqlx = { version = "0.7", features = [ "runtime-tokio-rustls", "postgres", "uuid", "time" ] }
-sqlb = "0.4"
+sqlx = { version = "0.7", features = [ "runtime-tokio", "postgres", "uuid"] }
+sea-query = "0.30"
+sea-query-binder = { version = "0.5", features = ["sqlx-postgres", "with-uuid" ] }
+sqlb = "0.5.0-alpha.1"
 # -- Tracing
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

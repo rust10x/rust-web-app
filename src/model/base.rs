@@ -1,7 +1,9 @@
 use crate::ctx::Ctx;
 use crate::model::ModelManager;
 use crate::model::{Error, Result};
-use sqlb::HasFields;
+use sea_query::{Expr, Order, PostgresQueryBuilder, Query};
+use sea_query_binder::SqlxBinder;
+use sqlb::{HasFields, SIden};
 use sqlx::postgres::PgRow;
 use sqlx::FromRow;
 
@@ -16,12 +18,19 @@ where
 {
 	let db = mm.db();
 
-	let fields = data.not_none_fields();
-	let (id,) = sqlb::insert()
-		.table(MC::TABLE)
-		.data(fields)
-		.returning(&["id"])
-		.fetch_one::<_, (i64,)>(db)
+	// -- Build query
+	let (columns, values) = data.not_none_fields().unzip();
+
+	let (sql, values) = Query::insert()
+		.into_table(SIden(MC::TABLE))
+		.columns(columns)
+		.values(values)?
+		.returning(Query::returning().columns([SIden("id")]))
+		.build_sqlx(PostgresQueryBuilder);
+
+	// -- Exec query
+	let (id,) = sqlx::query_as_with::<_, (i64,), _>(&sql, values)
+		.fetch_one(db)
 		.await?;
 
 	Ok(id)
@@ -35,10 +44,15 @@ where
 {
 	let db = mm.db();
 
-	let entity: E = sqlb::select()
-		.table(MC::TABLE)
-		.columns(E::field_names())
-		.and_where("id", "=", id)
+	// -- Build query
+	let (sql, values) = Query::select()
+		.from(SIden(MC::TABLE))
+		.columns(E::field_idens())
+		.and_where(Expr::col(SIden("id")).eq(id))
+		.build_sqlx(PostgresQueryBuilder);
+
+	// -- Exec query
+	let entity = sqlx::query_as_with::<_, E, _>(&sql, values)
 		.fetch_optional(db)
 		.await?
 		.ok_or(Error::EntityNotFound {
@@ -57,10 +71,15 @@ where
 {
 	let db = mm.db();
 
-	let entities: Vec<E> = sqlb::select()
-		.table(MC::TABLE)
-		.columns(E::field_names())
-		.order_by("id")
+	// -- Build query
+	let (sql, values) = Query::select()
+		.from(SIden(MC::TABLE))
+		.columns(E::field_idens())
+		.order_by(SIden("id"), Order::Asc)
+		.build_sqlx(PostgresQueryBuilder);
+
+	// -- Execute the query
+	let entities = sqlx::query_as_with::<_, E, _>(&sql, values)
 		.fetch_all(db)
 		.await?;
 
@@ -79,14 +98,22 @@ where
 {
 	let db = mm.db();
 
-	let fields = data.not_none_fields();
-	let count = sqlb::update()
-		.table(MC::TABLE)
-		.and_where("id", "=", id)
-		.data(fields)
-		.exec(db)
-		.await?;
+	// -- Build query
+	let fields = data.not_none_fields().zip();
 
+	let (sql, values) = Query::update()
+		.table(SIden(MC::TABLE))
+		.values(fields)
+		.and_where(Expr::col(SIden("id")).eq(id))
+		.build_sqlx(PostgresQueryBuilder);
+
+	// -- Execute query
+	let count = sqlx::query_with(&sql, values)
+		.execute(db)
+		.await?
+		.rows_affected();
+
+	// -- Check result
 	if count == 0 {
 		Err(Error::EntityNotFound {
 			entity: MC::TABLE,
@@ -103,12 +130,17 @@ where
 {
 	let db = mm.db();
 
-	let count = sqlb::delete()
-		.table(MC::TABLE)
-		.and_where("id", "=", id)
-		.exec(db)
-		.await?;
+	let (sql, values) = Query::delete()
+		.from_table(SIden(MC::TABLE))
+		.and_where(Expr::col(SIden("id")).eq(id))
+		.build_sqlx(PostgresQueryBuilder);
 
+	let count = sqlx::query_with(&sql, values)
+		.execute(db)
+		.await?
+		.rows_affected();
+
+	// -- Check result
 	if count == 0 {
 		Err(Error::EntityNotFound {
 			entity: MC::TABLE,
