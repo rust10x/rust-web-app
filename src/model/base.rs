@@ -1,14 +1,23 @@
 use crate::ctx::Ctx;
 use crate::model::ModelManager;
 use crate::model::{Error, Result};
-use sea_query::{Expr, Order, PostgresQueryBuilder, Query};
+use sea_query::{DynIden, Expr, Iden, IntoIden, Order, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use sqlb::{HasFields, SIden};
 use sqlx::postgres::PgRow;
 use sqlx::FromRow;
 
+#[derive(Iden)]
+pub enum CommonSpec {
+	Id,
+}
+
 pub trait DbBmc {
 	const TABLE: &'static str;
+
+	fn table_dyn() -> DynIden {
+		SIden(Self::TABLE).into_iden()
+	}
 }
 
 pub async fn create<MC, E>(_ctx: &Ctx, mm: &ModelManager, data: E) -> Result<i64>
@@ -22,10 +31,10 @@ where
 	let (columns, values) = data.not_none_fields().unzip();
 
 	let (sql, values) = Query::insert()
-		.into_table(SIden(MC::TABLE))
+		.into_table(MC::table_dyn())
 		.columns(columns)
 		.values(values)?
-		.returning(Query::returning().columns([SIden("id")]))
+		.returning(Query::returning().columns([CommonSpec::Id]))
 		.build_sqlx(PostgresQueryBuilder);
 
 	// -- Exec query
@@ -46,9 +55,9 @@ where
 
 	// -- Build query
 	let (sql, values) = Query::select()
-		.from(SIden(MC::TABLE))
+		.from(MC::table_dyn())
 		.columns(E::field_idens())
-		.and_where(Expr::col(SIden("id")).eq(id))
+		.and_where(Expr::col(CommonSpec::Id).eq(id))
 		.build_sqlx(PostgresQueryBuilder);
 
 	// -- Exec query
@@ -73,9 +82,9 @@ where
 
 	// -- Build query
 	let (sql, values) = Query::select()
-		.from(SIden(MC::TABLE))
+		.from(MC::table_dyn())
 		.columns(E::field_idens())
-		.order_by(SIden("id"), Order::Asc)
+		.order_by(CommonSpec::Id, Order::Asc)
 		.build_sqlx(PostgresQueryBuilder);
 
 	// -- Execute the query
@@ -102,9 +111,9 @@ where
 	let fields = data.not_none_fields().zip();
 
 	let (sql, values) = Query::update()
-		.table(SIden(MC::TABLE))
+		.table(MC::table_dyn())
 		.values(fields)
-		.and_where(Expr::col(SIden("id")).eq(id))
+		.and_where(Expr::col(CommonSpec::Id).eq(id))
 		.build_sqlx(PostgresQueryBuilder);
 
 	// -- Execute query
@@ -131,8 +140,8 @@ where
 	let db = mm.db();
 
 	let (sql, values) = Query::delete()
-		.from_table(SIden(MC::TABLE))
-		.and_where(Expr::col(SIden("id")).eq(id))
+		.from_table(MC::table_dyn())
+		.and_where(Expr::col(CommonSpec::Id).eq(id))
 		.build_sqlx(PostgresQueryBuilder);
 
 	let count = sqlx::query_with(&sql, values)

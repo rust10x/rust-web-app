@@ -3,7 +3,7 @@ use crate::ctx::Ctx;
 use crate::model::base::{self, DbBmc};
 use crate::model::ModelManager;
 use crate::model::{Error, Result};
-use sea_query::{Expr, PostgresQueryBuilder, Query};
+use sea_query::{Expr, Iden, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use serde::{Deserialize, Serialize};
 use sqlb::{Fields, HasFields, SIden};
@@ -55,9 +55,21 @@ pub trait UserBy: HasFields + for<'r> FromRow<'r, PgRow> + Unpin + Send {}
 impl UserBy for User {}
 impl UserBy for UserForLogin {}
 impl UserBy for UserForAuth {}
-
 // endregion: --- User Types
 
+// region:    --- UserSpec
+// Note: Since the entity properties Iden will be given by sqlb
+//       UserSpec does not have to be exhaustive, but just have the columns
+//       we use in our specific code.
+#[derive(Iden)]
+enum UserSpec {
+	Id,
+	Username,
+	Pwd,
+}
+// endregion: --- UserSpec
+
+// region:    --- UserBmc
 pub struct UserBmc;
 
 impl DbBmc for UserBmc {
@@ -84,9 +96,9 @@ impl UserBmc {
 
 		// -- Build query
 		let (sql, values) = Query::select()
-			.from(SIden(Self::TABLE))
+			.from(Self::table_dyn())
 			.columns(E::field_idens())
-			.and_where(Expr::col(SIden("username")).eq(username))
+			.and_where(Expr::col(UserSpec::Username).eq(username))
 			.build_sqlx(PostgresQueryBuilder);
 
 		// -- Execute query
@@ -113,11 +125,11 @@ impl UserBmc {
 		})?;
 
 		// -- Build query
-		let fields = [(SIden("pwd"), pwd.into())];
+		let fields = [(UserSpec::Pwd, pwd.into())];
 		let (sql, values) = Query::update()
-			.table(SIden(Self::TABLE))
+			.table(Self::table_dyn())
 			.values(fields)
-			.and_where(Expr::col(SIden("id")).eq(id))
+			.and_where(Expr::col(UserSpec::Id).eq(id))
 			.build_sqlx(PostgresQueryBuilder);
 
 		// -- Execute query
@@ -131,6 +143,7 @@ impl UserBmc {
 		Ok(())
 	}
 }
+// endregion: --- UserBmc
 
 // region:    --- Tests
 #[cfg(test)]
