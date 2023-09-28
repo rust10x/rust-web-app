@@ -31,6 +31,12 @@ docker exec -it -u postgres pg psql
 ALTER DATABASE postgres SET log_statement = 'all';
 ```
 
+
+## Various Cargo run
+
+- Tools
+	- `cargo run -p gen_key` - To genreate a new key (in Base64 URL)
+	
 ## Dev (watch)
 
 > NOTE: Install cargo watch with `cargo install cargo-watch`.

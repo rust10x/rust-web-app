@@ -11,15 +11,16 @@ repository = "https://github.com/awesomeapp-dev/rust-web-app"
 
 [workspace]
 members = [
-    # -- Tools
-    # "crates/tools/gen_key",
-
     # -- Application Libraries
     "crates/libs/base", # e.g., config, time, encoding, utilities.
     # "crates/libs/core", # e.g., model/store, events (token/pwd).
 
     # -- Application Services
-    # "crates/services/web-server"
+    # "crates/services/web-server",
+
+    # -- Tools
+    "crates/tools/gen_key",
+
 ]
 
 [dependencies]
