@@ -1,7 +1,7 @@
-use crate::config;
 use axum::handler::HandlerWithoutStateExt;
 use axum::http::StatusCode;
 use axum::routing::{any_service, MethodRouter};
+use lib_core::config;
 use tower_http::services::ServeDir;
 
 // Note: Here we can just return a MethodRouter rather than a full Router

@@ -2,11 +2,11 @@ use crate::crypt::{pwd, EncryptContent};
 use crate::ctx::Ctx;
 use crate::model::base::{self, DbBmc};
 use crate::model::ModelManager;
-use crate::model::{Error, Result};
+use crate::model::Result;
 use sea_query::{Expr, Iden, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use serde::{Deserialize, Serialize};
-use sqlb::{Fields, HasFields, SIden};
+use sqlb::{Fields, HasFields};
 use sqlx::postgres::PgRow;
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -133,7 +133,7 @@ impl UserBmc {
 			.build_sqlx(PostgresQueryBuilder);
 
 		// -- Execute query
-		let count = sqlx::query_with(&sql, values)
+		let _count = sqlx::query_with(&sql, values)
 			.execute(db)
 			.await?
 			.rows_affected();

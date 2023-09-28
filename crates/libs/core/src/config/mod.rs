@@ -1,8 +1,13 @@
-use crate::{Error, Result};
+// region:    --- Modules
+mod error;
+
+pub use self::error::{Error, Result};
+
 use lib_base::b64::b64u_decode;
 use std::env;
 use std::str::FromStr;
 use std::sync::OnceLock;
+// endregion: --- Modules
 
 pub fn config() -> &'static Config {
 	static INSTANCE: OnceLock<Config> = OnceLock::new();

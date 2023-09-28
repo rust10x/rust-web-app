@@ -1,20 +1,11 @@
-use lib_core::model;
-
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum Error {
-	// -- Modules
-	Model(model::Error),
+	// -- Config
+	ConfigMissingEnv(&'static str),
+	ConfigWrongFormat(&'static str),
 }
-
-// region:    --- Froms
-impl From<model::Error> for Error {
-	fn from(val: model::Error) -> Self {
-		Self::Model(val)
-	}
-}
-// endregion: --- Froms
 
 // region:    --- Error Boilerplate
 impl core::fmt::Display for Error {

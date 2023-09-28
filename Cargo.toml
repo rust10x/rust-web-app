@@ -13,7 +13,7 @@ repository = "https://github.com/awesomeapp-dev/rust-web-app"
 members = [
     # -- Application Libraries
     "crates/libs/base", # e.g., config, time, encoding, utilities.
-    # "crates/libs/core", # e.g., model/store, events (token/pwd).
+    "crates/libs/core", # e.g., model/store, events (token/pwd).
 
     # -- Application Services
     # "crates/services/web-server",
@@ -27,6 +27,7 @@ members = [
 tokio = { version = "1", features = ["full"] }
 # -- App Crates
 lib_base = { path = "crates/libs/base"}
+lib_core = { path = "crates/libs/core"}
 # -- Json
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

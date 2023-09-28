@@ -2,14 +2,15 @@
 
 mod task_rpc;
 
-use crate::ctx::Ctx;
-use crate::model::ModelManager;
+use crate::web::mw_auth::CtxW;
 use crate::web::rpc::task_rpc::{create_task, delete_task, list_tasks, update_task};
 use crate::web::{Error, Result};
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
 use axum::routing::post;
 use axum::{Json, Router};
+use lib_core::ctx::Ctx;
+use lib_core::model::ModelManager;
 use serde::Deserialize;
 use serde_json::{from_value, json, to_value, Value};
 use tracing::debug;
@@ -52,7 +53,7 @@ pub fn routes(mm: ModelManager) -> Router {
 
 async fn rpc_handler(
 	State(mm): State<ModelManager>,
-	ctx: Ctx,
+	ctx: CtxW,
 	Json(rpc_req): Json<RpcRequest>,
 ) -> Response {
 	// -- Create the RPC Info to be set to the response.extensions.
@@ -62,7 +63,7 @@ async fn rpc_handler(
 	};
 
 	// -- Exec & Store RpcInfo in response.
-	let mut res = _rpc_handler(ctx, mm, rpc_req).await.into_response();
+	let mut res = _rpc_handler(ctx.0, mm, rpc_req).await.into_response();
 	res.extensions_mut().insert(rpc_info);
 
 	res

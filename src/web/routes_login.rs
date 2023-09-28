@@ -1,14 +1,14 @@
-use crate::crypt::{pwd, EncryptContent};
-use crate::ctx::Ctx;
-use crate::model::user::{UserBmc, UserForLogin};
-use crate::model::ModelManager;
 use crate::web::{self, remove_token_cookie, Error, Result};
 use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
+use lib_core::crypt::{pwd, EncryptContent};
+use lib_core::ctx::Ctx;
+use lib_core::model::user::{UserBmc, UserForLogin};
+use lib_core::model::ModelManager;
 use serde::Deserialize;
 use serde_json::{json, Value};
-use tower_cookies::{Cookie, Cookies};
+use tower_cookies::Cookies;
 use tracing::debug;
 
 pub fn routes(mm: ModelManager) -> Router {
@@ -40,7 +40,7 @@ async fn api_login_handler(
 
 	// -- Validate the password.
 	let Some(pwd) = user.pwd else {
-		return Err(Error::LoginFailUserHasNoPwd{ user_id });
+		return Err(Error::LoginFailUserHasNoPwd { user_id });
 	};
 
 	pwd::validate_pwd(

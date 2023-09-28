@@ -1,6 +1,6 @@
-use crate::ctx::Ctx;
 use crate::log::log_request;
 use crate::web;
+use crate::web::mw_auth::CtxW;
 use crate::web::rpc::RpcInfo;
 use axum::http::{Method, Uri};
 use axum::response::{IntoResponse, Response};
@@ -10,7 +10,7 @@ use tracing::debug;
 use uuid::Uuid;
 
 pub async fn mw_reponse_map(
-	ctx: Option<Ctx>,
+	ctx: Option<CtxW>,
 	uri: Uri,
 	req_method: Method,
 	res: Response,
@@ -53,6 +53,7 @@ pub async fn mw_reponse_map(
 	// -- Build and log the server log line.
 	let client_error = client_status_error.unzip().1;
 	// TODO: Need to hander if log_request fail (but should not fail request)
+	let ctx = ctx.map(|c| c.0);
 	let _ = log_request(
 		uuid,
 		req_method,
