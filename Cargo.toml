@@ -2,8 +2,8 @@
 resolver = "2"
 members = [
     # -- Application Libraries
-    "crates/libs/base", # e.g., config, time, encoding, utilities.
-    "crates/libs/core", # e.g., model/store, events (token/pwd).
+    "crates/libs/base", # e.g., base64, time.
+    "crates/libs/core", # e.g., model/store, context, events, (token/pwd).
 
     # -- Application Services
     "crates/services/web-server",

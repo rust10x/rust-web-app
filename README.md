@@ -38,8 +38,7 @@ ALTER DATABASE postgres SET log_statement = 'all';
 	- `cargo run -p web-server` - Start the web server
 	- `cargo run -p web-server --example quick_dev` - Run the quick_dev main file. 
 - lib_core test
-	- `cargo test -p lib`
-
+	- `cargo test -p lib-core`
 - Tools
 	- `cargo run -p gen_key` - To genreate a new key (in Base64 URL)
 	
