@@ -6,8 +6,8 @@ pub mod token;
 
 pub use self::error::{Error, Result};
 
-use crate::utils::b64u_encode;
 use hmac::{Hmac, Mac};
+use lib_base::b64::b64u_encode;
 use sha2::Sha512;
 
 // endregion: --- Modules

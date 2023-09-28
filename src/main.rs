@@ -8,7 +8,6 @@ mod ctx;
 mod error;
 mod log;
 mod model;
-mod utils;
 mod web;
 // #[cfg(test)] // Commented during early development.
 pub mod _dev_utils;
