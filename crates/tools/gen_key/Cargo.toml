@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 # -- App Crates
-lib_base = { path = "../../../crates/libs/base"}
+lib-base = { path = "../../../crates/libs/base"}
 # -- Others
 rand = "0.8"
 anyhow = "1" # Ok for tools/

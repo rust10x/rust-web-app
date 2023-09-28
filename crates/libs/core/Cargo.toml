@@ -1,12 +1,12 @@
 [package]
-name = "lib_core"
+name = "lib-core"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 # -- App Crates
-lib_base = { path = "../../libs/base"}
+lib-base = { path = "../../libs/base"}
 # -- Serde
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -24,7 +24,6 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # -- Others
 uuid = {version = "1", features = ["v4","fast-rng",]}
-time = "0.3"
 
 
 [dev-dependencies]
