@@ -40,7 +40,7 @@ ALTER DATABASE postgres SET log_statement = 'all';
 - lib_core test
 	- `cargo test -p lib-core`
 - Tools
-	- `cargo run -p gen_key` - To genreate a new key (in Base64 URL)
+	- `cargo run -p gen-key` - To genreate a new key (in Base64 URL)
 	
 ## Dev (watch)
 

@@ -9,5 +9,5 @@ members = [
     "crates/services/web-server",
 
     # -- Tools
-    "crates/tools/gen_key",
+    "crates/tools/gen-key",
 ]

@@ -1,5 +1,5 @@
 [package]
-name = "gen_key"
+name = "gen-key"
 version = "0.1.0"
 edition = "2021"
 
