@@ -5,9 +5,9 @@ edition = "2021"
 rust-version = "1.70"
 authors = ["Jeremy Chone <jeremy.chone@gmail.com>"]
 license = "MIT OR Apache-2.0"
-description = "AwesomeApp rust-web-app."
-homepage="https://awesomeapp.dev"
-repository = "https://github.com/awesomeapp-dev/rust-web-app"
+description = "Rust10x rust-web-app production blueprint."
+homepage="https://rust10x.com/web-app"
+repository = "https://github.com/rust10x/rust-web-app"
 
 
 [dependencies]
@@ -21,7 +21,7 @@ axum = "0.6"
 tower-http = { version = "0.4", features = ["fs"] }
 tower-cookies = "0.9"
 # -- Data
-sqlx = { version = "0.7", features = [ "runtime-tokio-rustls", "postgres", "uuid", "time" ] }
+sqlx = { version = "0.7", features = [ "runtime-tokio", "postgres", "uuid" ] }
 sqlb = "0.4"
 # -- Tracing
 tracing = "0.1"
@@ -34,7 +34,6 @@ base64 = "0.21"
 # -- Others
 uuid = {version = "1", features = ["v4","fast-rng",]}
 time = "0.3"
-lazy-regex = "3"
 async-trait = "0.1"
 strum_macros = "0.25"
 
