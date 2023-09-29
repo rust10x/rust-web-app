@@ -1,9 +1,16 @@
+// region:    --- Modules
+mod error;
+
+pub use self::error::{Error, Result};
+
 use crate::config;
-use crate::crypt::{encrypt_into_b64u, EncryptContent, Error, Result};
+use hmac::{Hmac, Mac};
 use lib_base::b64::{b64u_decode_to_string, b64u_encode};
 use lib_base::time::{now_utc, now_utc_plus_sec_str, parse_utc};
+use sha2::Sha512;
 use std::fmt::Display;
 use std::str::FromStr;
+// endregion: --- Modules
 
 // region:    --- Token Type
 
@@ -22,16 +29,16 @@ impl FromStr for Token {
 	fn from_str(token_str: &str) -> std::result::Result<Self, Self::Err> {
 		let splits: Vec<&str> = token_str.split('.').collect();
 		if splits.len() != 3 {
-			return Err(Error::TokenInvalidFormat);
+			return Err(Error::InvalidFormat);
 		}
 		let (ident_b64u, exp_b64u, sign_b64u) = (splits[0], splits[1], splits[2]);
 
 		Ok(Self {
 			ident: b64u_decode_to_string(ident_b64u)
-				.map_err(|_| Error::TokenCannotDecodeIdent)?,
+				.map_err(|_| Error::CannotDecodeIdent)?,
 
 			exp: b64u_decode_to_string(exp_b64u)
-				.map_err(|_| Error::TokenCannotDecodeExp)?,
+				.map_err(|_| Error::CannotDecodeExp)?,
 
 			sign_b64u: sign_b64u.to_string(),
 		})
@@ -100,16 +107,15 @@ fn _validate_token_sign_and_exp(
 		_token_sign_into_b64u(&origin_token.ident, &origin_token.exp, salt, key)?;
 
 	if new_sign_b64u != origin_token.sign_b64u {
-		return Err(Error::TokenSignatureNotMatching);
+		return Err(Error::SignatureNotMatching);
 	}
 
 	// -- Validate expiration.
-	let origin_exp =
-		parse_utc(&origin_token.exp).map_err(|_| Error::TokenExpNotIso)?;
+	let origin_exp = parse_utc(&origin_token.exp).map_err(|_| Error::ExpNotIso)?;
 	let now = now_utc();
 
 	if origin_exp < now {
-		return Err(Error::TokenExpired);
+		return Err(Error::Expired);
 	}
 
 	Ok(())
@@ -124,15 +130,21 @@ fn _token_sign_into_b64u(
 	key: &[u8],
 ) -> Result<String> {
 	let content = format!("{}.{}", b64u_encode(ident), b64u_encode(exp));
-	let signature = encrypt_into_b64u(
-		key,
-		&EncryptContent {
-			content,
-			salt: salt.to_string(),
-		},
-	)?;
 
-	Ok(signature)
+	// -- Create a HMAC-SHA-512 from key.
+	let mut hmac_sha512 = Hmac::<Sha512>::new_from_slice(key)
+		.map_err(|_| Error::HmacFailNewFromSlice)?;
+
+	// -- Add content.
+	hmac_sha512.update(content.as_bytes());
+	hmac_sha512.update(salt.as_bytes());
+
+	// -- Finalize and b64u encode.
+	let hmac_result = hmac_sha512.finalize();
+	let result_bytes = hmac_result.into_bytes();
+	let result = b64u_encode(result_bytes);
+
+	Ok(result)
 }
 
 // endregion: --- (private) Token Gen and Validation
@@ -218,8 +230,8 @@ mod tests {
 
 		// -- Check
 		assert!(
-			matches!(res, Err(Error::TokenExpired)),
-			"Should have matched `Err(Error::TokenExpired)` but was `{res:?}`"
+			matches!(res, Err(Error::Expired)),
+			"Should have matched `Err(Error::Expired)` but was `{res:?}`"
 		);
 
 		Ok(())

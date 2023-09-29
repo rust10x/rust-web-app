@@ -1,8 +1,8 @@
-use crate::crypt::{pwd, EncryptContent};
 use crate::ctx::Ctx;
 use crate::model::base::{self, DbBmc};
 use crate::model::ModelManager;
 use crate::model::Result;
+use crate::pwd::{self, EncryptContent};
 use sea_query::{Expr, Iden, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use serde::{Deserialize, Serialize};

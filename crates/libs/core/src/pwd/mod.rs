@@ -1,18 +1,36 @@
 // region:    --- Modules
-
 mod error;
 
 pub use self::error::{Error, Result};
 
+use crate::config;
 use hmac::{Hmac, Mac};
 use lib_base::b64::b64u_encode;
 use sha2::Sha512;
-
 // endregion: --- Modules
 
 pub struct EncryptContent {
 	pub content: String, // Clear content.
 	pub salt: String,    // Clear salt.
+}
+/// Encrypt the password with the default scheme.
+pub fn encrypt_pwd(enc_content: &EncryptContent) -> Result<String> {
+	let key = &config().PWD_KEY;
+
+	let encrypted = encrypt_into_b64u(key, enc_content)?;
+
+	Ok(format!("#01#{encrypted}"))
+}
+
+/// Validate if an EncryptContent matches.
+pub fn validate_pwd(enc_content: &EncryptContent, pwd_ref: &str) -> Result<()> {
+	let pwd = encrypt_pwd(enc_content)?;
+
+	if pwd == pwd_ref {
+		Ok(())
+	} else {
+		Err(Error::NotMatching)
+	}
 }
 
 pub fn encrypt_into_b64u(
@@ -36,33 +54,3 @@ pub fn encrypt_into_b64u(
 
 	Ok(result)
 }
-
-// region:    --- Tests
-#[cfg(test)]
-mod tests {
-	use super::*;
-	use anyhow::Result;
-	use rand::RngCore;
-
-	#[test]
-	fn test_encrypt_into_b64u_ok() -> Result<()> {
-		// -- Setup & Fixtures
-		let mut fx_key = [0u8; 64]; // 512 bits = 64 bytes
-		rand::thread_rng().fill_bytes(&mut fx_key);
-		let fx_enc_content = EncryptContent {
-			content: "hello world".to_string(),
-			salt: "some pepper".to_string(),
-		};
-		// TODO: Need to fix fx_key, and precompute fx_res.
-		let fx_res = encrypt_into_b64u(&fx_key, &fx_enc_content)?;
-
-		// -- Exec
-		let res = encrypt_into_b64u(&fx_key, &fx_enc_content)?;
-
-		// -- Check
-		assert_eq!(res, fx_res);
-
-		Ok(())
-	}
-}
-// endregion: --- Tests
