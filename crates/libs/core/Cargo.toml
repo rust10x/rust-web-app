@@ -24,6 +24,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # -- Others
 uuid = {version = "1", features = ["v4","fast-rng",]}
+lazy-regex = "3"
 
 
 [dev-dependencies]

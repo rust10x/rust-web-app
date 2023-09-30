@@ -9,6 +9,8 @@ pub enum Error {
 
 	// -- Pwd
 	NotMatching,
+	SchemeUnknown(String),
+	SchemeNotFoundInContent,
 }
 
 // region:    --- Error Boilerplate
