@@ -7,28 +7,29 @@ pub use self::error::{Error, Result};
 
 use crate::pwd::scheme::{get_scheme, SchemeStatus, DEFAULT_SCHEME};
 use lazy_regex::regex_captures;
+use uuid::Uuid;
 
 // endregion: --- Modules
 
 // region:    --- Types
 
-pub struct EncryptContent {
+pub struct ContentToHash {
 	pub content: String, // Clear content.
-	pub salt: String,    // Clear salt.
+	pub salt: Uuid,      // Clear salt.
 }
 
 // endregion: --- Types
 
 // region:    --- Public Functions
 
-/// Encrypt the password with the default scheme.
-pub fn encrypt_pwd(enc_content: &EncryptContent) -> Result<String> {
-	encrypt_for_scheme(DEFAULT_SCHEME, enc_content)
+/// hash the password with the default scheme.
+pub fn hash_pwd(to_hash: &ContentToHash) -> Result<String> {
+	hash_for_scheme(DEFAULT_SCHEME, to_hash)
 }
 
-/// Validate if an EncryptContent matches.
+/// Validate if an ContentToHash matches.
 pub fn validate_pwd(
-	enc_content: &EncryptContent,
+	to_hash: &ContentToHash,
 	pwd_with_scheme_ref: &str,
 ) -> Result<SchemeStatus> {
 	let PwdParts {
@@ -36,7 +37,7 @@ pub fn validate_pwd(
 		raw: raw_pwd_ref,
 	} = parse_pwd(pwd_with_scheme_ref)?;
 
-	validate_for_scheme(&scheme_name, enc_content, &raw_pwd_ref)?;
+	validate_for_scheme(&scheme_name, to_hash, &raw_pwd_ref)?;
 
 	if scheme_name == DEFAULT_SCHEME {
 		Ok(SchemeStatus::Ok)
@@ -49,33 +50,27 @@ pub fn validate_pwd(
 
 // region:    --- Scheme Infra
 
-fn encrypt_for_scheme(
-	scheme_name: &str,
-	enc_content: &EncryptContent,
-) -> Result<String> {
+fn hash_for_scheme(scheme_name: &str, to_hash: &ContentToHash) -> Result<String> {
 	let scheme = get_scheme(scheme_name)
 		.map_err(|_| Error::SchemeUnknown(scheme_name.to_string()))?;
 
-	let pwd_raw =
-		scheme
-			.encrypt(enc_content)
-			.map_err(|scheme_error| Error::Scheme {
-				scheme_name: scheme_name.to_string(),
-				scheme_error,
-			})?;
+	let pwd_raw = scheme.hash(to_hash).map_err(|scheme_error| Error::Scheme {
+		scheme_name: scheme_name.to_string(),
+		scheme_error,
+	})?;
 
 	Ok(format!("#{scheme_name}#{}", pwd_raw))
 }
 
 fn validate_for_scheme(
 	scheme_name: &str,
-	enc_content: &EncryptContent,
+	to_hash: &ContentToHash,
 	raw_pwd_ref: &str,
 ) -> Result<()> {
 	let scheme = get_scheme(scheme_name)
 		.map_err(|_| Error::SchemeUnknown(scheme_name.to_string()))?;
 	scheme
-		.validate(enc_content, raw_pwd_ref)
+		.validate(to_hash, raw_pwd_ref)
 		.map_err(|scheme_error| Error::Scheme {
 			scheme_name: scheme_name.to_string(),
 			scheme_error,
@@ -89,10 +84,10 @@ struct PwdParts {
 	raw: String,
 }
 
-fn parse_pwd(enc_content: &str) -> Result<PwdParts> {
+fn parse_pwd(pwd_with_scheme: &str) -> Result<PwdParts> {
 	regex_captures!(
 		r#"^#(\w+)#(.*)"#, // a literal regex
-		enc_content
+		pwd_with_scheme
 	)
 	.map(|(_whole, scheme, raw)| PwdParts {
 		scheme_name: scheme.to_string(),
@@ -108,21 +103,22 @@ fn parse_pwd(enc_content: &str) -> Result<PwdParts> {
 mod tests {
 	use super::*;
 	use anyhow::Result;
+	use lib_base::uuid::uuid_parse;
 
 	#[test]
 	fn test_validate() -> Result<()> {
 		// -- Setup & Fixtures
-		let fx_salt = "some-salt";
+		let fx_salt = uuid_parse("f05e8961-d6ad-4086-9e78-a6de065e5453")?;
 		let fx_pwd_clear = "welcome";
 
-		let pwd_enc_1 = encrypt_pwd(&EncryptContent {
-			salt: fx_salt.to_string(),
+		let pwd_enc_1 = hash_pwd(&ContentToHash {
+			salt: fx_salt,
 			content: fx_pwd_clear.to_string(),
 		})?;
 
 		validate_pwd(
-			&EncryptContent {
-				salt: fx_salt.to_string(),
+			&ContentToHash {
+				salt: fx_salt,
 				content: fx_pwd_clear.to_string(),
 			},
 			&pwd_enc_1,

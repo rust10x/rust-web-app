@@ -1,45 +1,40 @@
 use super::{Error, Result};
 use crate::config;
 use crate::pwd::scheme::Scheme;
-use crate::pwd::EncryptContent;
+use crate::pwd::ContentToHash;
 use argon2::password_hash::SaltString;
 use argon2::{
 	Algorithm, Argon2, Params, PasswordHash, PasswordHasher, PasswordVerifier,
 	Version,
 };
-use lib_base::uuid::{uuid_parse, uuid_to_b64};
+use lib_base::uuid::uuid_to_b64;
 use std::sync::OnceLock;
 
 pub struct Scheme02;
 
 impl Scheme for Scheme02 {
-	fn encrypt(&self, enc_content: &EncryptContent) -> Result<String> {
+	fn hash(&self, to_hash: &ContentToHash) -> Result<String> {
 		let argon2 = get_argon2();
 
-		// TODO: Might want to have EncryptContent.salt as Uuid, to avoid the back and forth.
-		let salt_uuid = uuid_parse(&enc_content.salt).map_err(|_| Error::Salt)?;
-		let salt_b64 = SaltString::from_b64(&uuid_to_b64(salt_uuid))
+		// TODO: Might want to have ContentToHash.salt as Uuid, to avoid the back and forth.
+		let salt_b64 = SaltString::from_b64(&uuid_to_b64(to_hash.salt))
 			.map_err(|_| Error::Salt)?;
 
 		let pwd = argon2
-			.hash_password(enc_content.content.as_bytes(), &salt_b64)
+			.hash_password(to_hash.content.as_bytes(), &salt_b64)
 			.map_err(|_| Error::Hash)?
 			.to_string();
 
 		Ok(pwd)
 	}
 
-	fn validate(
-		&self,
-		_enc_content: &EncryptContent,
-		raw_pwd_ref: &str,
-	) -> Result<()> {
+	fn validate(&self, to_hash: &ContentToHash, raw_pwd_ref: &str) -> Result<()> {
 		let argon2 = get_argon2();
 
-		// NOTE: For now, we validate using the password itself rather than re-encrypting it.
+		// NOTE: For now, we validate using the password itself rather than re-hashing it.
 		//       The downside is that if a different scheme based on Argon2 uses a different Argon2 config,
 		//       it might still pass since the configs are parsed from the password.
-		//       It might be worth considering whether it's more strict to simply re-encrypt the password
+		//       It might be worth considering whether it's more strict to simply re-hash the password
 		//       and perform a straightforward comparison. This is because schemes should be as strict as possible,
 		//       and we may want different schemes with varying Argon2 parameters.
 
@@ -47,7 +42,7 @@ impl Scheme for Scheme02 {
 			PasswordHash::new(raw_pwd_ref).map_err(|_| Error::Hash)?;
 
 		argon2
-			.verify_password(raw_pwd_ref.as_bytes(), &parsed_hash_ref)
+			.verify_password(to_hash.content.as_bytes(), &parsed_hash_ref)
 			.map_err(|_| Error::PwdValidate)
 	}
 }

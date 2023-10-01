@@ -2,7 +2,7 @@ use crate::ctx::Ctx;
 use crate::model::base::{self, DbBmc};
 use crate::model::ModelManager;
 use crate::model::Result;
-use crate::pwd::{self, EncryptContent};
+use crate::pwd::{self, ContentToHash};
 use sea_query::{Expr, Iden, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use serde::{Deserialize, Serialize};
@@ -35,7 +35,7 @@ pub struct UserForLogin {
 	pub username: String,
 
 	// -- pwd and token info
-	pub pwd: Option<String>, // encrypted, #_scheme_id_#....
+	pub pwd: Option<String>, // hashed, #_scheme_id_#....
 	pub pwd_salt: Uuid,
 	pub token_salt: Uuid,
 }
@@ -119,9 +119,9 @@ impl UserBmc {
 
 		// -- Prep password
 		let user: UserForLogin = Self::get(ctx, mm, id).await?;
-		let pwd = pwd::encrypt_pwd(&EncryptContent {
+		let pwd = pwd::hash_pwd(&ContentToHash {
 			content: pwd_clear.to_string(),
-			salt: user.pwd_salt.to_string(),
+			salt: user.pwd_salt,
 		})?;
 
 		// -- Build query

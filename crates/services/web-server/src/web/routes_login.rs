@@ -5,7 +5,7 @@ use axum::{Json, Router};
 use lib_core::ctx::Ctx;
 use lib_core::model::user::{UserBmc, UserForLogin};
 use lib_core::model::ModelManager;
-use lib_core::pwd::{self, EncryptContent};
+use lib_core::pwd::{self, ContentToHash};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use tower_cookies::Cookies;
@@ -44,8 +44,8 @@ async fn api_login_handler(
 	};
 
 	pwd::validate_pwd(
-		&EncryptContent {
-			salt: user.pwd_salt.to_string(),
+		&ContentToHash {
+			salt: user.pwd_salt,
 			content: pwd_clear.clone(),
 		},
 		&pwd,

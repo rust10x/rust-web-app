@@ -5,7 +5,7 @@ pub mod scheme_01;
 pub mod scheme_02;
 
 pub use self::error::{Error, Result};
-use crate::pwd::EncryptContent;
+use crate::pwd::ContentToHash;
 
 // endregion: --- Modules
 
@@ -20,13 +20,9 @@ pub fn get_scheme(scheme_name: &str) -> Result<Box<dyn Scheme>> {
 }
 
 pub trait Scheme {
-	fn encrypt(&self, enc_content: &EncryptContent) -> Result<String>;
+	fn hash(&self, to_hash: &ContentToHash) -> Result<String>;
 
-	fn validate(
-		&self,
-		enc_content: &EncryptContent,
-		raw_pwd_ref: &str,
-	) -> Result<()>;
+	fn validate(&self, to_hash: &ContentToHash, raw_pwd_ref: &str) -> Result<()>;
 }
 
 /// SchemeStatus is the return value of validate_pwd telling the caller if the
@@ -34,5 +30,5 @@ pub trait Scheme {
 #[derive(Debug)]
 pub enum SchemeStatus {
 	Ok,       // The pwd use the latest scheme. All good.
-	Outdated, // The pwd use a old scheme. Would need to be re-encrypted.
+	Outdated, // The pwd use a old scheme. Would need to be re-hashed with default scheme.
 }
