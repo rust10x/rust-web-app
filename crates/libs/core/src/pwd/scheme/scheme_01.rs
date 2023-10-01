@@ -48,24 +48,23 @@ fn hash(key: &[u8], to_hash: &ContentToHash) -> Result<String> {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use crate::config;
 	use anyhow::Result;
 	use lib_base::uuid::uuid_parse;
-	use rand::RngCore;
 
 	#[test]
 	fn test_hash_into_b64u_ok() -> Result<()> {
-		// -- Setup & Fixture
-		let mut fx_key = [0u8; 64]; // 512 bits = 64 bytes
-		rand::thread_rng().fill_bytes(&mut fx_key);
+		// -- Setup & Fixtures
+		let fx_key = &config().PWD_KEY; // 512 bits = 64 bytes
 		let fx_to_hash = ContentToHash {
 			content: "hello world".to_string(),
 			salt: uuid_parse("f05e8961-d6ad-4086-9e78-a6de065e5453")?,
 		};
 		// TODO: Need to fix fx_key, and precompute fx_res.
-		let fx_res = hash(&fx_key, &fx_to_hash)?;
+		let fx_res = "qO9A90161DoewhNXFwVcnAaljRIVnajvd5zsVDrySCwxpoLwVCACzaz-8Ev2ZpI8RackUTLBVqFI6H5oMe-OIg";
 
 		// -- Exec
-		let res = hash(&fx_key, &fx_to_hash)?;
+		let res = hash(fx_key, &fx_to_hash)?;
 
 		// -- Check
 		assert_eq!(res, fx_res);

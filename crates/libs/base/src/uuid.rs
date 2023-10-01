@@ -10,7 +10,7 @@ pub fn uuid_parse(val: &str) -> Result<Uuid> {
 }
 
 pub fn uuid_to_b64(uuid: Uuid) -> String {
-	general_purpose::STANDARD.encode(uuid)
+	general_purpose::STANDARD.encode(uuid.as_bytes())
 }
 
 // region:    --- Error
