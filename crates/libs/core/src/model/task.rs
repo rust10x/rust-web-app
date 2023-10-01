@@ -2,15 +2,27 @@ use crate::ctx::Ctx;
 use crate::model::base::{self, DbBmc};
 use crate::model::ModelManager;
 use crate::model::Result;
+use lib_base::time::Rfc3339;
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 use sqlb::Fields;
+use sqlx::types::time::OffsetDateTime;
 use sqlx::FromRow;
 
 // region:    --- Task Types
+#[serde_as]
 #[derive(Debug, Clone, Fields, FromRow, Serialize)]
 pub struct Task {
 	pub id: i64,
 	pub title: String,
+
+	// -- Timestamps
+	pub cid: i64,
+	#[serde_as(as = "Rfc3339")]
+	pub ctime: OffsetDateTime,
+	pub mid: i64,
+	#[serde_as(as = "Rfc3339")]
+	pub mtime: OffsetDateTime,
 }
 
 #[derive(Fields, Deserialize)]
@@ -29,6 +41,7 @@ pub struct TaskBmc;
 
 impl DbBmc for TaskBmc {
 	const TABLE: &'static str = "task";
+	const TIMESTAMP: bool = true;
 }
 
 impl TaskBmc {

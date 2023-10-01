@@ -1,9 +1,10 @@
 use crate::ctx::Ctx;
 use crate::model::ModelManager;
 use crate::model::{Error, Result};
+use lib_base::time::now_utc;
 use sea_query::{DynIden, Expr, Iden, IntoIden, Order, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
-use sqlb::{HasFields, SIden};
+use sqlb::{Field, Fields, HasFields, SIden};
 use sqlx::postgres::PgRow;
 use sqlx::FromRow;
 
@@ -12,15 +13,24 @@ pub enum CommonSpec {
 	Id,
 }
 
+#[derive(Iden)]
+pub enum TimestampSpec {
+	Cid,
+	Ctime,
+	Mid,
+	Mtime,
+}
+
 pub trait DbBmc {
 	const TABLE: &'static str;
+	const TIMESTAMP: bool;
 
 	fn table_dyn() -> DynIden {
 		SIden(Self::TABLE).into_iden()
 	}
 }
 
-pub async fn create<MC, E>(_ctx: &Ctx, mm: &ModelManager, data: E) -> Result<i64>
+pub async fn create<MC, E>(ctx: &Ctx, mm: &ModelManager, data: E) -> Result<i64>
 where
 	MC: DbBmc,
 	E: HasFields,
@@ -28,7 +38,9 @@ where
 	let db = mm.db();
 
 	// -- Build query
-	let (columns, values) = data.not_none_fields().unzip();
+	let mut fields = data.not_none_fields();
+	add_timestamp(&mut fields, ctx.user_id(), true, true);
+	let (columns, values) = fields.unzip();
 
 	let (sql, values) = Query::insert()
 		.into_table(MC::table_dyn())
@@ -96,7 +108,7 @@ where
 }
 
 pub async fn update<MC, E>(
-	_ctx: &Ctx,
+	ctx: &Ctx,
 	mm: &ModelManager,
 	id: i64,
 	data: E,
@@ -108,7 +120,9 @@ where
 	let db = mm.db();
 
 	// -- Build query
-	let fields = data.not_none_fields().zip();
+	let mut fields = data.not_none_fields();
+	add_timestamp(&mut fields, ctx.user_id(), false, true);
+	let fields = fields.zip();
 
 	let (sql, values) = Query::update()
 		.table(MC::table_dyn())
@@ -159,3 +173,19 @@ where
 		Ok(())
 	}
 }
+
+// region:    --- Utils
+
+fn add_timestamp(fields: &mut Fields, user_id: i64, create: bool, update: bool) {
+	let now = now_utc();
+	if create {
+		fields.push(Field::new(TimestampSpec::Cid.into_iden(), user_id.into()));
+		fields.push(Field::new(TimestampSpec::Ctime.into_iden(), now.into()));
+	}
+
+	if update {
+		fields.push(Field::new(TimestampSpec::Mid.into_iden(), user_id.into()));
+		fields.push(Field::new(TimestampSpec::Mtime.into_iden(), now.into()));
+	}
+}
+// endregion: --- Utils
