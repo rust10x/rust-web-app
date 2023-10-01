@@ -5,7 +5,7 @@ use axum::{Json, Router};
 use lib_core::ctx::Ctx;
 use lib_core::model::user::{UserBmc, UserForLogin};
 use lib_core::model::ModelManager;
-use lib_core::pwd::{self, ContentToHash};
+use lib_core::pwd::{self, ContentToHash, SchemeStatus};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use tower_cookies::Cookies;
@@ -43,7 +43,7 @@ async fn api_login_handler(
 		return Err(Error::LoginFailUserHasNoPwd { user_id });
 	};
 
-	pwd::validate_pwd(
+	let scheme_status = pwd::validate_pwd(
 		&ContentToHash {
 			salt: user.pwd_salt,
 			content: pwd_clear.clone(),
@@ -51,6 +51,12 @@ async fn api_login_handler(
 		&pwd,
 	)
 	.map_err(|_| Error::LoginFailPwdNotMatching { user_id })?;
+
+	// -- Update password scheme if need
+	if let SchemeStatus::Outdated = scheme_status {
+		debug!("pwd encrypt scheme outdated, upgrading.");
+		UserBmc::update_pwd(&root_ctx, &mm, user.id, &pwd_clear).await?;
+	}
 
 	// -- Set web token.
 	web::set_token_cookie(&cookies, &user.username, &user.token_salt.to_string())?;

@@ -4,8 +4,9 @@ mod error;
 mod scheme;
 
 pub use self::error::{Error, Result};
+pub use scheme::SchemeStatus;
 
-use crate::pwd::scheme::{get_scheme, SchemeStatus, DEFAULT_SCHEME};
+use crate::pwd::scheme::{get_scheme, DEFAULT_SCHEME};
 use lazy_regex::regex_captures;
 use uuid::Uuid;
 
