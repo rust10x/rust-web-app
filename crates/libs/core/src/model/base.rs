@@ -39,7 +39,7 @@ where
 
 	// -- Build query
 	let mut fields = data.not_none_fields();
-	add_timestamp(&mut fields, ctx.user_id(), true, true);
+	add_timestamp_for_create(&mut fields, ctx.user_id());
 	let (columns, values) = fields.unzip();
 
 	let (sql, values) = Query::insert()
@@ -121,7 +121,7 @@ where
 
 	// -- Build query
 	let mut fields = data.not_none_fields();
-	add_timestamp(&mut fields, ctx.user_id(), false, true);
+	add_timestamp_for_update(&mut fields, ctx.user_id());
 	let fields = fields.zip();
 
 	let (sql, values) = Query::update()
@@ -176,16 +176,22 @@ where
 
 // region:    --- Utils
 
-fn add_timestamp(fields: &mut Fields, user_id: i64, create: bool, update: bool) {
+/// Update the timestamps info for create
+/// (e.g., cid, ctime, and mid, mtime will be updated with the same values)
+pub fn add_timestamp_for_create(fields: &mut Fields, user_id: i64) {
 	let now = now_utc();
-	if create {
-		fields.push(Field::new(TimestampSpec::Cid.into_iden(), user_id.into()));
-		fields.push(Field::new(TimestampSpec::Ctime.into_iden(), now.into()));
-	}
+	fields.push(Field::new(TimestampSpec::Cid.into_iden(), user_id.into()));
+	fields.push(Field::new(TimestampSpec::Ctime.into_iden(), now.into()));
 
-	if update {
-		fields.push(Field::new(TimestampSpec::Mid.into_iden(), user_id.into()));
-		fields.push(Field::new(TimestampSpec::Mtime.into_iden(), now.into()));
-	}
+	fields.push(Field::new(TimestampSpec::Mid.into_iden(), user_id.into()));
+	fields.push(Field::new(TimestampSpec::Mtime.into_iden(), now.into()));
+}
+
+/// Update the timestamps info only for update.
+/// (.e.g., only mid, mtime will be udpated)
+pub fn add_timestamp_for_update(fields: &mut Fields, user_id: i64) {
+	let now = now_utc();
+	fields.push(Field::new(TimestampSpec::Mid.into_iden(), user_id.into()));
+	fields.push(Field::new(TimestampSpec::Mtime.into_iden(), now.into()));
 }
 // endregion: --- Utils

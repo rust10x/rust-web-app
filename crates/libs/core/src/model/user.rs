@@ -1,12 +1,12 @@
 use crate::ctx::Ctx;
-use crate::model::base::{self, DbBmc};
+use crate::model::base::{self, add_timestamp_for_update, DbBmc};
 use crate::model::ModelManager;
 use crate::model::Result;
 use crate::pwd::{self, ContentToHash};
-use sea_query::{Expr, Iden, PostgresQueryBuilder, Query};
+use sea_query::{Expr, Iden, IntoIden, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use serde::{Deserialize, Serialize};
-use sqlb::{Fields, HasFields};
+use sqlb::{Field, Fields, HasFields};
 use sqlx::postgres::PgRow;
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -126,7 +126,11 @@ impl UserBmc {
 		})?;
 
 		// -- Build query
-		let fields = [(UserSpec::Pwd, pwd.into())];
+		let mut fields =
+			Fields::new(vec![Field::new(UserSpec::Pwd.into_iden(), pwd.into())]);
+		add_timestamp_for_update(&mut fields, ctx.user_id());
+		let fields = fields.zip();
+
 		let (sql, values) = Query::update()
 			.table(Self::table_dyn())
 			.values(fields)

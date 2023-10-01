@@ -19,7 +19,7 @@
 
 // region:    --- Modules
 
-mod base;
+pub(in crate::model) mod base;
 mod error;
 mod store;
 pub mod task;
