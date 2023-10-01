@@ -1,22 +1,16 @@
-use crate::pwd::scheme;
 use serde::Serialize;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, Serialize)]
 pub enum Error {
-	// -- Key
-	KeyFailHmac,
+	Key,
+	Engine,
+	Salt,
+	Hash,
+	PwdValidate,
 
-	Scheme {
-		scheme_name: String,
-		scheme_error: scheme::Error,
-	},
-
-	// -- Pwd
-	NotMatching,
-	SchemeUnknown(String),
-	SchemeNotInContent,
+	SchemeNotFound,
 }
 
 // region:    --- Error Boilerplate

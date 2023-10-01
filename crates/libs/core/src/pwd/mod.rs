@@ -1,36 +1,20 @@
 // region:    --- Modules
 
 mod error;
-mod scheme_01;
+mod scheme;
 
 pub use self::error::{Error, Result};
 
-use crate::pwd::scheme_01::Scheme01;
+use crate::pwd::scheme::{get_scheme, SchemeStatus, DEFAULT_SCHEME};
 use lazy_regex::regex_captures;
 
 // endregion: --- Modules
-
-const DEFAULT_SCHEME: &str = Scheme01::NAME;
 
 // region:    --- Types
 
 pub struct EncryptContent {
 	pub content: String, // Clear content.
 	pub salt: String,    // Clear salt.
-}
-
-pub trait Scheme {
-	const NAME: &'static str;
-
-	fn encrypt(enc_content: &EncryptContent) -> Result<String>;
-}
-
-/// SchemeStatus is the return value of validate_pwd telling the caller if the
-/// password scheme needs to updated.
-#[derive(Debug)]
-pub enum SchemeStatus {
-	Ok,       // The pwd use the latest scheme. All good.
-	Outdated, // The pwd use a old scheme. Would need to be re-encrypted.
 }
 
 // endregion: --- Types
@@ -45,19 +29,19 @@ pub fn encrypt_pwd(enc_content: &EncryptContent) -> Result<String> {
 /// Validate if an EncryptContent matches.
 pub fn validate_pwd(
 	enc_content: &EncryptContent,
-	pwd_ref: &str,
+	pwd_with_scheme_ref: &str,
 ) -> Result<SchemeStatus> {
-	let scheme_ref = extract_scheme(pwd_ref)?;
-	let pwd_new = encrypt_for_scheme(&scheme_ref, enc_content)?;
+	let PwdParts {
+		scheme_name,
+		raw: raw_pwd_ref,
+	} = parse_pwd(pwd_with_scheme_ref)?;
 
-	if pwd_new == pwd_ref {
-		if scheme_ref == DEFAULT_SCHEME {
-			Ok(SchemeStatus::Ok)
-		} else {
-			Ok(SchemeStatus::Outdated)
-		}
+	validate_for_scheme(&scheme_name, enc_content, &raw_pwd_ref)?;
+
+	if scheme_name == DEFAULT_SCHEME {
+		Ok(SchemeStatus::Ok)
 	} else {
-		Err(Error::NotMatching)
+		Ok(SchemeStatus::Outdated)
 	}
 }
 
@@ -65,23 +49,56 @@ pub fn validate_pwd(
 
 // region:    --- Scheme Infra
 
-/// scheme: e.g., "01"
-fn encrypt_for_scheme(scheme: &str, enc_content: &EncryptContent) -> Result<String> {
-	let pwd = match scheme {
-		Scheme01::NAME => Scheme01::encrypt(enc_content),
-		_ => Err(Error::SchemeUnknown(scheme.to_string())),
-	};
+fn encrypt_for_scheme(
+	scheme_name: &str,
+	enc_content: &EncryptContent,
+) -> Result<String> {
+	let scheme = get_scheme(scheme_name)
+		.map_err(|_| Error::SchemeUnknown(scheme_name.to_string()))?;
 
-	Ok(format!("#{scheme}#{}", pwd?))
+	let pwd_raw =
+		scheme
+			.encrypt(enc_content)
+			.map_err(|scheme_error| Error::Scheme {
+				scheme_name: scheme_name.to_string(),
+				scheme_error,
+			})?;
+
+	Ok(format!("#{scheme_name}#{}", pwd_raw))
 }
 
-fn extract_scheme(enc_content: &str) -> Result<String> {
+fn validate_for_scheme(
+	scheme_name: &str,
+	enc_content: &EncryptContent,
+	raw_pwd_ref: &str,
+) -> Result<()> {
+	let scheme = get_scheme(scheme_name)
+		.map_err(|_| Error::SchemeUnknown(scheme_name.to_string()))?;
+	scheme
+		.validate(enc_content, raw_pwd_ref)
+		.map_err(|scheme_error| Error::Scheme {
+			scheme_name: scheme_name.to_string(),
+			scheme_error,
+		})
+}
+
+struct PwdParts {
+	/// The scheme only (e.g. "01")
+	scheme_name: String,
+	/// The raw password, without the scheme name.
+	raw: String,
+}
+
+fn parse_pwd(enc_content: &str) -> Result<PwdParts> {
 	regex_captures!(
-		r#"^#(\w+)#.*"#, // a literal regex
+		r#"^#(\w+)#(.*)"#, // a literal regex
 		enc_content
 	)
-	.map(|(_whole, scheme)| scheme.to_string())
-	.ok_or(Error::SchemeNotFoundInContent)
+	.map(|(_whole, scheme, raw)| PwdParts {
+		scheme_name: scheme.to_string(),
+		raw: raw.to_string(),
+	})
+	.ok_or(Error::SchemeNotInContent)
 }
 
 // endregion: --- Scheme Infra
@@ -115,31 +132,31 @@ mod tests {
 	}
 
 	#[test]
-	fn test_extract_scheme_ok() -> Result<()> {
+	fn test_parse_pwd_ok() -> Result<()> {
 		// -- Fixtures
 		let fx_pwd = "#01#DdVzPPKKpjs-xuf-Y88t3MpQ5KPDqa7C2gpaTIysHnHIzX_j2IgNb3WtEDHLfF2ps1OWVPKOkgLFvvDMvNrN-A";
 
 		// -- Exec
-		let res = extract_scheme(fx_pwd)?;
+		let PwdParts { scheme_name, .. } = parse_pwd(fx_pwd)?;
 
 		// -- Check
-		assert_eq!(res, "01");
+		assert_eq!(scheme_name, "01");
 
 		Ok(())
 	}
 
 	#[test]
-	fn test_extract_scheme_err_without() -> Result<()> {
+	fn test_parse_pwd_err_without() -> Result<()> {
 		// -- Fixtures
 		let fx_pwd = "DdVzPPKKpjs-xuf-Y88t3MpQ5KPDqa7C2gpaTIysHnHIzX_j2IgNb3WtEDHLfF2ps1OWVPKOkgLFvvDMvNrN-A";
 
 		// -- Exec
-		let res = extract_scheme(fx_pwd);
+		let res = parse_pwd(fx_pwd);
 
 		// -- Check
 		assert!(
-			matches!(res, Err(Error::SchemeNotFoundInContent)),
-			"Error not matching. Actual: {res:?}"
+			matches!(res, Err(Error::SchemeNotInContent)),
+			"Error not matching. Should have been SchemeNotFoundInContent"
 		);
 
 		Ok(())
