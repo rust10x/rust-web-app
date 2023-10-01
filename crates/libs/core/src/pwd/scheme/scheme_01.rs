@@ -53,7 +53,7 @@ mod tests {
 	use lib_base::uuid::uuid_parse;
 
 	#[test]
-	fn test_hash_into_b64u_ok() -> Result<()> {
+	fn test_scheme_01_hash_into_b64u_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let fx_key = &config().PWD_KEY; // 512 bits = 64 bytes
 		let fx_to_hash = ContentToHash {

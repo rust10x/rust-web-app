@@ -9,7 +9,7 @@ use crate::pwd::ContentToHash;
 
 // endregion: --- Modules
 
-pub const DEFAULT_SCHEME: &str = "01";
+pub const DEFAULT_SCHEME: &str = "02";
 
 pub fn get_scheme(scheme_name: &str) -> Result<Box<dyn Scheme>> {
 	match scheme_name {

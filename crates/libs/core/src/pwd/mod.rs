@@ -157,5 +157,36 @@ mod tests {
 
 		Ok(())
 	}
+
+	#[test]
+	fn test_scheme_upgrade_ok() -> Result<()> {
+		// -- Fixtures
+		let fx_salt = uuid_parse("f05e8961-d6ad-4086-9e78-a6de065e5453")?;
+		let fx_pwd_clear = "welcome";
+		let fx_to_hash = ContentToHash {
+			content: fx_pwd_clear.to_string(),
+			salt: fx_salt,
+		};
+		let fx_02_pwd = "#02#$argon2id$v=19$m=19456,t=2,p=1$8F6JYdatQIaeeKbeBl5UUw$H0HJXVHWXDh/B1BOlY+ov5hBNc8Sd434KERqgljWSxk";
+
+		// -- scheme 01 hash & validate & check
+		let pwd_01 = hash_for_scheme("01", &fx_to_hash)?;
+		let scheme_status = validate_pwd(&fx_to_hash, &pwd_01)?;
+		assert!(
+			matches!(scheme_status, SchemeStatus::Outdated),
+			"scheme 01 should be Outdated"
+		);
+
+		// -- normal hash & validate & check
+		let pwd_default = hash_pwd(&fx_to_hash)?;
+		assert_eq!(pwd_default, fx_02_pwd);
+		let scheme_status = validate_pwd(&fx_to_hash, &pwd_default)?;
+		assert!(
+			matches!(scheme_status, SchemeStatus::Ok),
+			"scheme 02 should be Ok"
+		);
+
+		Ok(())
+	}
 }
 // endregion: --- Tests
