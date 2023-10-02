@@ -19,8 +19,9 @@
 
 // region:    --- Modules
 
-pub(in crate::model) mod base;
+mod base;
 mod error;
+pub mod project;
 mod store;
 pub mod task;
 pub mod user;

@@ -13,7 +13,7 @@ pub enum Error {
 	// -- RPC
 	RpcMethodUnknown(String),
 	RpcMissingParams { rpc_method: String },
-	RpcFailJsonParams { rpc_method: String },
+	RpcFailJsonParams { rpc_method: String, cause: String },
 
 	// -- Login
 	LoginFailUsernameNotFound,

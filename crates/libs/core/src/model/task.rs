@@ -4,16 +4,20 @@ use crate::model::ModelManager;
 use crate::model::Result;
 use lib_base::time::Rfc3339;
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
-use sqlb::Fields;
+use serde_with::{serde_as, skip_serializing_none};
+use sqlb::{Fields, HasFields};
 use sqlx::types::time::OffsetDateTime;
 use sqlx::FromRow;
 
 // region:    --- Task Types
+#[skip_serializing_none]
 #[serde_as]
 #[derive(Debug, Clone, Fields, FromRow, Serialize)]
 pub struct Task {
 	pub id: i64,
+
+	pub project_id: i64,
+
 	pub title: String,
 
 	// -- Timestamps
@@ -28,11 +32,17 @@ pub struct Task {
 #[derive(Fields, Deserialize)]
 pub struct TaskForCreate {
 	pub title: String,
+	pub project_id: i64,
 }
 
 #[derive(Fields, Deserialize)]
 pub struct TaskForUpdate {
 	pub title: Option<String>,
+}
+
+#[derive(Fields, Deserialize)]
+pub struct TaskFilter {
+	project_id: Option<i64>,
 }
 // endregion: --- Task Types
 
@@ -57,8 +67,13 @@ impl TaskBmc {
 		base::get::<Self, _>(ctx, mm, id).await
 	}
 
-	pub async fn list(ctx: &Ctx, mm: &ModelManager) -> Result<Vec<Task>> {
-		base::list::<Self, _>(ctx, mm).await
+	pub async fn list(
+		ctx: &Ctx,
+		mm: &ModelManager,
+		filter: Option<TaskFilter>,
+	) -> Result<Vec<Task>> {
+		let simple_filter = filter.map(|f| f.not_none_fields());
+		base::list::<Self, _>(ctx, mm, simple_filter).await
 	}
 
 	pub async fn update(
@@ -92,10 +107,14 @@ mod tests {
 		let mm = _dev_utils::init_test().await;
 		let ctx = Ctx::root_ctx();
 		let fx_title = "test_create_ok title";
+		let project_id =
+			_dev_utils::seed_project(&ctx, &mm, "project for task test_create_ok")
+				.await?;
 
 		// -- Exec
 		let task_c = TaskForCreate {
 			title: fx_title.to_string(),
+			project_id,
 		};
 		let id = TaskBmc::create(&ctx, &mm, task_c).await?;
 
@@ -142,10 +161,13 @@ mod tests {
 		let mm = _dev_utils::init_test().await;
 		let ctx = Ctx::root_ctx();
 		let fx_titles = &["test_list_ok-task 01", "test_list_ok-task 02"];
-		_dev_utils::seed_tasks(&ctx, &mm, fx_titles).await?;
+		let fx_project_id =
+			_dev_utils::seed_project(&ctx, &mm, "project for task test_list_ok")
+				.await?;
+		_dev_utils::seed_tasks(&ctx, &mm, fx_project_id, fx_titles).await?;
 
 		// -- Exec
-		let tasks = TaskBmc::list(&ctx, &mm).await?;
+		let tasks = TaskBmc::list(&ctx, &mm, None).await?;
 
 		// -- Check
 		let tasks: Vec<Task> = tasks
@@ -170,7 +192,11 @@ mod tests {
 		let ctx = Ctx::root_ctx();
 		let fx_title = "test_update_ok - task 01";
 		let fx_title_new = "test_update_ok - task 01 - new";
-		let fx_task = _dev_utils::seed_tasks(&ctx, &mm, &[fx_title])
+		let fx_project_id =
+			_dev_utils::seed_project(&ctx, &mm, "project for task test_list_ok")
+				.await?;
+
+		let fx_task = _dev_utils::seed_tasks(&ctx, &mm, fx_project_id, &[fx_title])
 			.await?
 			.remove(0);
 

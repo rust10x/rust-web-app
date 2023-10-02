@@ -17,11 +17,8 @@ impl Scheme for Scheme02 {
 
 		// NOTE: SaltString::from_b64(..) takes a string, but if "=" it returns error
 		//       So, using the SaltString::encode_b64(&[u8])
-		let salt_b64 =
-			SaltString::encode_b64(to_hash.salt.as_bytes()).map_err(|ex| {
-				println!("->> salt error: {ex:?}");
-				Error::Salt
-			})?;
+		let salt_b64 = SaltString::encode_b64(to_hash.salt.as_bytes())
+			.map_err(|_| Error::Salt)?;
 
 		let pwd = argon2
 			.hash_password(to_hash.content.as_bytes(), &salt_b64)

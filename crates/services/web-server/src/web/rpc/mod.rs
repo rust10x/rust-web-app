@@ -1,8 +1,12 @@
 // region:    --- Modules
 
+mod project_rpc;
 mod task_rpc;
 
 use crate::web::mw_auth::CtxW;
+use crate::web::rpc::project_rpc::{
+	create_project, delete_project, list_projects, update_project,
+};
 use crate::web::rpc::task_rpc::{create_task, delete_task, list_tasks, update_task};
 use crate::web::{Error, Result};
 use axum::extract::State;
@@ -43,6 +47,11 @@ pub struct ParamsIded {
 	id: i64,
 }
 
+#[derive(Deserialize)]
+pub struct ParamsList<F> {
+	filter: Option<F>,
+}
+
 // endregion: --- RPC Types
 
 pub fn routes(mm: ModelManager) -> Router {
@@ -77,14 +86,28 @@ pub struct RpcInfo {
 }
 
 macro_rules! exec_rpc_fn {
+	($rpc_fn:expr, $ctx:expr, $mm:expr, $rpc_params:expr, "optional_params") => {{
+		let rpc_fn_name = stringify!($rpc_fn);
+
+		let params = $rpc_params.map(from_value).transpose().map_err(|ex| {
+			Error::RpcFailJsonParams {
+				rpc_method: rpc_fn_name.to_string(),
+				cause: ex.to_string(),
+			}
+		})?;
+
+		$rpc_fn($ctx, $mm, params).await.map(to_value)??
+	}};
+
 	// With Params
 	($rpc_fn:expr, $ctx:expr, $mm:expr, $rpc_params:expr) => {{
 		let rpc_fn_name = stringify!($rpc_fn);
 		let params = $rpc_params.ok_or(Error::RpcMissingParams {
 			rpc_method: rpc_fn_name.to_string(),
 		})?;
-		let params = from_value(params).map_err(|_| Error::RpcFailJsonParams {
+		let params = from_value(params).map_err(|ex| Error::RpcFailJsonParams {
 			rpc_method: rpc_fn_name.to_string(),
+			cause: ex.to_string(),
 		})?;
 		$rpc_fn($ctx, $mm, params).await.map(to_value)??
 	}};
@@ -106,12 +129,25 @@ async fn _rpc_handler(
 		params: rpc_params,
 	} = rpc_req;
 
-	debug!("{:<12} - _rpc_handler - method: {rpc_method}", "HANDLER");
+	debug!(
+		"{:<12} - _rpc_handler - method: {rpc_method} params: {rpc_params:?}",
+		"HANDLER"
+	);
 
 	let result_json: Value = match rpc_method.as_str() {
+		// -- Project RPC methods.
+		"create_project" => exec_rpc_fn!(create_project, ctx, mm, rpc_params),
+		"list_projects" => {
+			exec_rpc_fn!(list_projects, ctx, mm, rpc_params, "optional_params")
+		}
+		"update_project" => exec_rpc_fn!(update_project, ctx, mm, rpc_params),
+		"delete_project" => exec_rpc_fn!(delete_project, ctx, mm, rpc_params),
+
 		// -- Task RPC methods.
 		"create_task" => exec_rpc_fn!(create_task, ctx, mm, rpc_params),
-		"list_tasks" => exec_rpc_fn!(list_tasks, ctx, mm),
+		"list_tasks" => {
+			exec_rpc_fn!(list_tasks, ctx, mm, rpc_params, "optional_params")
+		}
 		"update_task" => exec_rpc_fn!(update_task, ctx, mm, rpc_params),
 		"delete_task" => exec_rpc_fn!(delete_task, ctx, mm, rpc_params),
 

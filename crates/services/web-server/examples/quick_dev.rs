@@ -18,6 +18,22 @@ async fn main() -> Result<()> {
 	);
 	req_login.await?.print().await?;
 
+	let req_create_project = hc.do_post(
+		"/api/rpc",
+		json!({
+			"id": 1,
+			"method": "create_project",
+			"params": {
+				"data": {
+					"name": "project AAA"
+				}
+			}
+		}),
+	);
+	let result = req_create_project.await?;
+	result.print().await?;
+	let project_id = result.json_body()?.pointer("/result/id").unwrap().as_i64();
+
 	let req_create_task = hc.do_post(
 		"/api/rpc",
 		json!({
@@ -25,7 +41,8 @@ async fn main() -> Result<()> {
 			"method": "create_task",
 			"params": {
 				"data": {
-					"title": "task AAA"
+					"title": "task AAA",
+					"project_id": project_id,
 				}
 			}
 		}),
@@ -45,7 +62,7 @@ async fn main() -> Result<()> {
 			}
 		}),
 	);
-	req_update_task.await?.print().await?;
+	// req_update_task.await?.print().await?;
 
 	let req_delete_task = hc.do_post(
 		"/api/rpc",
@@ -57,13 +74,18 @@ async fn main() -> Result<()> {
 			}
 		}),
 	);
-	req_delete_task.await?.print().await?;
+	// req_delete_task.await?.print().await?;
 
 	let req_list_tasks = hc.do_post(
 		"/api/rpc",
 		json!({
 			"id": 1,
-			"method": "list_tasks"
+			"method": "list_tasks",
+			"params": {
+				"filter": {
+					"project_id": project_id
+				}
+			}
 		}),
 	);
 	req_list_tasks.await?.print().await?;

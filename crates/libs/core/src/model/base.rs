@@ -84,7 +84,11 @@ where
 	Ok(entity)
 }
 
-pub async fn list<MC, E>(_ctx: &Ctx, mm: &ModelManager) -> Result<Vec<E>>
+pub async fn list<MC, E>(
+	_ctx: &Ctx,
+	mm: &ModelManager,
+	simple_filter: Option<Fields>,
+) -> Result<Vec<E>>
 where
 	MC: DbBmc,
 	E: for<'r> FromRow<'r, PgRow> + Unpin + Send,
@@ -93,11 +97,20 @@ where
 	let db = mm.db();
 
 	// -- Build query
-	let (sql, values) = Query::select()
+	let mut query = Query::select();
+	query
 		.from(MC::table_dyn())
 		.columns(E::field_idens())
-		.order_by(CommonSpec::Id, Order::Asc)
-		.build_sqlx(PostgresQueryBuilder);
+		.order_by(CommonSpec::Id, Order::Asc);
+
+	// Apply the simple fitler if present.
+	if let Some(filter_fields) = simple_filter {
+		for (col, val) in filter_fields.zip() {
+			query.and_where(Expr::col(col).eq(val));
+		}
+	}
+
+	let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
 
 	// -- Execute the query
 	let entities = sqlx::query_as_with::<_, E, _>(&sql, values)
