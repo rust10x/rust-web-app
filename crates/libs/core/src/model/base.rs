@@ -207,4 +207,5 @@ pub fn add_timestamp_for_update(fields: &mut Fields, user_id: i64) {
 	fields.push(Field::new(TimestampSpec::Mid.into_iden(), user_id.into()));
 	fields.push(Field::new(TimestampSpec::Mtime.into_iden(), now.into()));
 }
+
 // endregion: --- Utils

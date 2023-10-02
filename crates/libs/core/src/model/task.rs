@@ -167,13 +167,12 @@ mod tests {
 		_dev_utils::seed_tasks(&ctx, &mm, fx_project_id, fx_titles).await?;
 
 		// -- Exec
-		let tasks = TaskBmc::list(&ctx, &mm, None).await?;
+		let filter = TaskFilter {
+			project_id: Some(fx_project_id),
+		};
+		let tasks = TaskBmc::list(&ctx, &mm, Some(filter)).await?;
 
 		// -- Check
-		let tasks: Vec<Task> = tasks
-			.into_iter()
-			.filter(|t| t.title.starts_with("test_list_ok-task"))
-			.collect();
 		assert_eq!(tasks.len(), 2, "number of seeded tasks.");
 
 		// -- Clean
