@@ -84,6 +84,7 @@ where
 	Ok(entity)
 }
 
+/// NOTE: For now very simple filter based on equal operation on direct fields's values.
 pub async fn list<MC, E>(
 	_ctx: &Ctx,
 	mm: &ModelManager,
@@ -186,6 +187,12 @@ where
 		Ok(())
 	}
 }
+
+// region:    --- Join Info
+// .column((Font::Table, Font::Name))
+// .left_join(Font::Table, Expr::col((Char::Table, Char::FontId)).equals((Font::Table, Font::Id)))
+
+// endregion: --- Join Info
 
 // region:    --- Utils
 
