@@ -3,9 +3,11 @@ use crate::model::base::{self, DbBmc};
 use crate::model::ModelManager;
 use crate::model::Result;
 use lib_base::time::Rfc3339;
+use modql::field::Fields;
+use modql::filter::{FilterNodes, OpValsString};
+use modql::ListOptions;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use sqlb::{Fields, HasFields};
 use sqlx::types::time::OffsetDateTime;
 use sqlx::FromRow;
 
@@ -51,9 +53,9 @@ struct ProjectForCreateInner {
 	pub owner_id: i64,
 }
 
-#[derive(Fields, Deserialize)]
+#[derive(FilterNodes, Default, Deserialize)]
 pub struct ProjectFilter {
-	name: Option<String>,
+	name: Option<OpValsString>,
 }
 // endregion: --- Project Types
 
@@ -86,9 +88,9 @@ impl ProjectBmc {
 		ctx: &Ctx,
 		mm: &ModelManager,
 		filter: Option<ProjectFilter>,
+		list_options: Option<ListOptions>,
 	) -> Result<Vec<Project>> {
-		let filter = filter.map(|f| f.not_none_fields());
-		base::list::<Self, _>(ctx, mm, filter).await
+		base::list::<Self, _, _>(ctx, mm, filter, list_options).await
 	}
 
 	pub async fn update(

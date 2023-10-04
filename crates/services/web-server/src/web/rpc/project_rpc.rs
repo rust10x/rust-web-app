@@ -24,8 +24,10 @@ pub async fn list_projects(
 	mm: ModelManager,
 	params: Option<ParamsList<ProjectFilter>>,
 ) -> Result<Vec<Project>> {
-	let filter = params.and_then(|p| p.filter);
-	let projects = ProjectBmc::list(&ctx, &mm, filter).await?;
+	let (filter, list_options) = params.map(|p| (p.filter, p.list_options)).unzip();
+	let projects =
+		ProjectBmc::list(&ctx, &mm, filter.flatten(), list_options.flatten())
+			.await?;
 
 	Ok(projects)
 }

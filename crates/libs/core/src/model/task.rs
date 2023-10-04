@@ -3,9 +3,11 @@ use crate::model::base::{self, DbBmc};
 use crate::model::ModelManager;
 use crate::model::Result;
 use lib_base::time::Rfc3339;
+use modql::field::Fields;
+use modql::filter::{FilterNodes, OpValsBool, OpValsInt64, OpValsString};
+use modql::ListOptions;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
-use sqlb::{Fields, HasFields};
 use sqlx::types::time::OffsetDateTime;
 use sqlx::FromRow;
 
@@ -19,6 +21,7 @@ pub struct Task {
 	pub project_id: i64,
 
 	pub title: String,
+	pub done: bool,
 
 	// -- Timestamps
 	pub cid: i64,
@@ -40,9 +43,11 @@ pub struct TaskForUpdate {
 	pub title: Option<String>,
 }
 
-#[derive(Fields, Deserialize)]
+#[derive(FilterNodes, Deserialize, Default)]
 pub struct TaskFilter {
-	project_id: Option<i64>,
+	project_id: Option<OpValsInt64>,
+	title: Option<OpValsString>,
+	done: Option<OpValsBool>,
 }
 // endregion: --- Task Types
 
@@ -71,9 +76,9 @@ impl TaskBmc {
 		ctx: &Ctx,
 		mm: &ModelManager,
 		filter: Option<TaskFilter>,
+		list_options: Option<ListOptions>,
 	) -> Result<Vec<Task>> {
-		let simple_filter = filter.map(|f| f.not_none_fields());
-		base::list::<Self, _>(ctx, mm, simple_filter).await
+		base::list::<Self, _, _>(ctx, mm, filter, list_options).await
 	}
 
 	pub async fn update(
@@ -96,8 +101,10 @@ impl TaskBmc {
 mod tests {
 	use super::*;
 	use crate::_dev_utils;
+	use crate::model::project::ProjectBmc;
 	use crate::model::Error;
 	use anyhow::Result;
+	use serde_json::json;
 	use serial_test::serial;
 
 	#[serial]
@@ -156,29 +163,170 @@ mod tests {
 
 	#[serial]
 	#[tokio::test]
-	async fn test_list_ok() -> Result<()> {
+	async fn test_list_by_project_id_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let mm = _dev_utils::init_test().await;
 		let ctx = Ctx::root_ctx();
-		let fx_titles = &["test_list_ok-task 01", "test_list_ok-task 02"];
-		let fx_project_id =
-			_dev_utils::seed_project(&ctx, &mm, "project for task test_list_ok")
-				.await?;
+		let fx_titles = &[
+			"test_list_by_project_id_ok 01",
+			"test_list_by_project_id_ok 02",
+			"test_list_by_project_id_ok 02",
+		];
+		let fx_project_id = _dev_utils::seed_project(
+			&ctx,
+			&mm,
+			"project for task test_list_by_project_id_ok",
+		)
+		.await?;
+		_dev_utils::seed_tasks(&ctx, &mm, fx_project_id, fx_titles).await?;
+
+		// -- Other data
+		let other_project_id = _dev_utils::seed_project(
+			&ctx,
+			&mm,
+			"other project for tasks test_list_by_project_id_ok",
+		)
+		.await?;
+		let other_titles = &["other-title 01", "other-title 02"];
+		_dev_utils::seed_tasks(&ctx, &mm, other_project_id, other_titles).await?;
+
+		// -- Exec
+		let filter = TaskFilter {
+			project_id: Some(fx_project_id.into()),
+			..Default::default()
+		};
+		let tasks = TaskBmc::list(&ctx, &mm, Some(filter), None).await?;
+
+		// -- Check
+		assert_eq!(tasks.len(), 3, "number of seeded tasks.");
+
+		// -- Clean
+		// NOTE: Those project delete will delete the associate tasks
+		//       by sql cascade delete.
+		ProjectBmc::delete(&ctx, &mm, fx_project_id).await?;
+		ProjectBmc::delete(&ctx, &mm, other_project_id).await?;
+		Ok(())
+	}
+
+	#[serial]
+	#[tokio::test]
+	async fn test_list_by_title_eq_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let mm = _dev_utils::init_test().await;
+		let ctx = Ctx::root_ctx();
+		let fx_project_id = _dev_utils::seed_project(
+			&ctx,
+			&mm,
+			"project for tasks test_list_by_title_ok",
+		)
+		.await?;
+		let fx_titles = &[
+			"test_list_by_title_ok 01",
+			"test_list_by_title_ok 02", // There is two "02" for testing below
+			"test_list_by_title_ok 02",
+		];
+
 		_dev_utils::seed_tasks(&ctx, &mm, fx_project_id, fx_titles).await?;
 
 		// -- Exec
 		let filter = TaskFilter {
-			project_id: Some(fx_project_id),
+			title: Some("test_list_by_title_ok 02".into()), // This will be a OpValString::Eq
+			..Default::default()
 		};
-		let tasks = TaskBmc::list(&ctx, &mm, Some(filter)).await?;
+		let tasks = TaskBmc::list(&ctx, &mm, Some(filter), None).await?;
 
 		// -- Check
-		assert_eq!(tasks.len(), 2, "number of seeded tasks.");
+		assert_eq!(tasks.len(), 2);
 
-		// -- Clean
-		for task in tasks.iter() {
-			TaskBmc::delete(&ctx, &mm, task.id).await?;
-		}
+		// -- Cleanup
+		// Will delete associate tasks
+		ProjectBmc::delete(&ctx, &mm, fx_project_id).await?;
+
+		Ok(())
+	}
+
+	#[serial]
+	#[tokio::test]
+	async fn test_list_by_title_contains_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let mm = _dev_utils::init_test().await;
+		let ctx = Ctx::root_ctx();
+		let fx_project_id = _dev_utils::seed_project(
+			&ctx,
+			&mm,
+			"project for tasks test_list_by_title_contains_ok",
+		)
+		.await?;
+		let fx_titles = &[
+			"test_list_by_title_contains_ok 01",
+			"test_list_by_title_contains_ok 02.1",
+			"test_list_by_title_contains_ok 02.2",
+		];
+		_dev_utils::seed_tasks(&ctx, &mm, fx_project_id, fx_titles).await?;
+
+		// -- Exec
+		let filter_json = json! ({
+			"title": {"$contains": "title_contains_ok 02"},
+			"done": false
+		});
+		let filter = serde_json::from_value(filter_json)?;
+		let tasks = TaskBmc::list(&ctx, &mm, Some(filter), None).await?;
+
+		// -- Check
+		assert_eq!(tasks.len(), 2);
+
+		// -- Cleanup
+		// Will delete associate tasks
+		ProjectBmc::delete(&ctx, &mm, fx_project_id).await?;
+
+		Ok(())
+	}
+
+	#[serial]
+	#[tokio::test]
+	async fn test_list_with_list_options_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let mm = _dev_utils::init_test().await;
+		let ctx = Ctx::root_ctx();
+		let fx_project_id = _dev_utils::seed_project(
+			&ctx,
+			&mm,
+			"project for tasks test_list_by_title_ok",
+		)
+		.await?;
+		let fx_titles = &[
+			"test_list_by_title_ok 01",
+			"test_list_by_title_ok 02.1",
+			"test_list_by_title_ok 02.2",
+		];
+		_dev_utils::seed_tasks(&ctx, &mm, fx_project_id, fx_titles).await?;
+
+		// -- Exec
+		let filter = TaskFilter {
+			project_id: Some(fx_project_id.into()),
+			..Default::default()
+		};
+
+		let list_options = json! ({
+			"offset": 0,
+			"limit": 2,
+			"order_bys": "!title"
+		});
+		let list_options: ListOptions = serde_json::from_value(list_options)?;
+		let tasks =
+			TaskBmc::list(&ctx, &mm, Some(filter), Some(list_options)).await?;
+
+		// -- Check
+		let titles: Vec<String> = tasks.into_iter().map(|t| t.title).collect();
+		assert_eq!(titles.len(), 2);
+		assert_eq!(
+			&titles,
+			&["test_list_by_title_ok 02.2", "test_list_by_title_ok 02.1"]
+		);
+
+		// -- Cleanup
+		// Will delete associate tasks
+		ProjectBmc::delete(&ctx, &mm, fx_project_id).await?;
 
 		Ok(())
 	}

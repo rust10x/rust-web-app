@@ -48,6 +48,7 @@ CREATE TABLE task (
 
   -- Properties
   title varchar(256) NOT NULL,
+  done bool NOT NULL DEFAULT false,
 
   -- Timestamps
   cid bigint NOT NULL,

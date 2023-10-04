@@ -3,10 +3,10 @@ use crate::model::base::{self, add_timestamp_for_update, DbBmc};
 use crate::model::ModelManager;
 use crate::model::Result;
 use crate::pwd::{self, ContentToHash};
+use modql::field::{Field, Fields, HasFields};
 use sea_query::{Expr, Iden, IntoIden, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use serde::{Deserialize, Serialize};
-use sqlb::{Field, Fields, HasFields};
 use sqlx::postgres::PgRow;
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -97,7 +97,7 @@ impl UserBmc {
 
 		// -- Build query
 		let (sql, values) = Query::select()
-			.from(Self::table_dyn())
+			.from(Self::table_iden())
 			.columns(E::field_idens())
 			.and_where(Expr::col(UserSpec::Username).eq(username))
 			.build_sqlx(PostgresQueryBuilder);
@@ -132,7 +132,7 @@ impl UserBmc {
 		let fields = fields.zip();
 
 		let (sql, values) = Query::update()
-			.table(Self::table_dyn())
+			.table(Self::table_iden())
 			.values(fields)
 			.and_where(Expr::col(UserSpec::Id).eq(id))
 			.build_sqlx(PostgresQueryBuilder);
