@@ -15,6 +15,7 @@ use axum::routing::post;
 use axum::{Json, Router};
 use lib_core::ctx::Ctx;
 use lib_core::model::ModelManager;
+use modql::ListOptions;
 use serde::Deserialize;
 use serde_json::{from_value, json, to_value, Value};
 use tracing::debug;
@@ -50,6 +51,7 @@ pub struct ParamsIded {
 #[derive(Deserialize)]
 pub struct ParamsList<F> {
 	filter: Option<F>,
+	list_options: Option<ListOptions>,
 }
 
 // endregion: --- RPC Types

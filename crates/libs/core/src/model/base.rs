@@ -2,9 +2,12 @@ use crate::ctx::Ctx;
 use crate::model::ModelManager;
 use crate::model::{Error, Result};
 use lib_base::time::now_utc;
-use sea_query::{DynIden, Expr, Iden, IntoIden, Order, PostgresQueryBuilder, Query};
+use modql::field::{Field, Fields, HasFields};
+use modql::filter::SeaFilter;
+use modql::sea_utils::SIden;
+use modql::ListOptions;
+use sea_query::{DynIden, Expr, Iden, IntoIden, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
-use sqlb::{Field, Fields, HasFields, SIden};
 use sqlx::postgres::PgRow;
 use sqlx::FromRow;
 
@@ -25,7 +28,7 @@ pub trait DbBmc {
 	const TABLE: &'static str;
 	const TIMESTAMP: bool;
 
-	fn table_dyn() -> DynIden {
+	fn table_iden() -> DynIden {
 		SIden(Self::TABLE).into_iden()
 	}
 }
@@ -43,7 +46,7 @@ where
 	let (columns, values) = fields.unzip();
 
 	let (sql, values) = Query::insert()
-		.into_table(MC::table_dyn())
+		.into_table(MC::table_iden())
 		.columns(columns)
 		.values(values)?
 		.returning(Query::returning().columns([CommonSpec::Id]))
@@ -67,8 +70,8 @@ where
 
 	// -- Build query
 	let (sql, values) = Query::select()
-		.from(MC::table_dyn())
-		.columns(E::field_idens())
+		.from(MC::table_iden())
+		.columns(E::field_column_refs())
 		.and_where(Expr::col(CommonSpec::Id).eq(id))
 		.build_sqlx(PostgresQueryBuilder);
 
@@ -84,36 +87,34 @@ where
 	Ok(entity)
 }
 
-/// NOTE: For now very simple filter based on equal operation on direct fields's values.
-pub async fn list<MC, E>(
+pub async fn list<MC, E, F>(
 	_ctx: &Ctx,
 	mm: &ModelManager,
-	simple_filter: Option<Fields>,
+	filter: Option<F>,
+	list_options: Option<ListOptions>,
 ) -> Result<Vec<E>>
 where
 	MC: DbBmc,
+	F: SeaFilter,
 	E: for<'r> FromRow<'r, PgRow> + Unpin + Send,
 	E: HasFields,
 {
 	let db = mm.db();
 
-	// -- Build query
+	// -- Build the query
 	let mut query = Query::select();
-	query
-		.from(MC::table_dyn())
-		.columns(E::field_idens())
-		.order_by(CommonSpec::Id, Order::Asc);
-
-	// Apply the simple fitler if present.
-	if let Some(filter_fields) = simple_filter {
-		for (col, val) in filter_fields.zip() {
-			query.and_where(Expr::col(col).eq(val));
-		}
+	query.from(MC::table_iden()).columns(E::field_column_refs());
+	// condition from filter
+	if let Some(cond) = filter.map(SeaFilter::into_sea_condition) {
+		query.cond_where(cond);
+	}
+	// list options
+	if let Some(list_options) = list_options {
+		list_options.apply_to_sea_query(&mut query);
 	}
 
-	let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
-
 	// -- Execute the query
+	let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
 	let entities = sqlx::query_as_with::<_, E, _>(&sql, values)
 		.fetch_all(db)
 		.await?;
@@ -139,7 +140,7 @@ where
 	let fields = fields.zip();
 
 	let (sql, values) = Query::update()
-		.table(MC::table_dyn())
+		.table(MC::table_iden())
 		.values(fields)
 		.and_where(Expr::col(CommonSpec::Id).eq(id))
 		.build_sqlx(PostgresQueryBuilder);
@@ -168,7 +169,7 @@ where
 	let db = mm.db();
 
 	let (sql, values) = Query::delete()
-		.from_table(MC::table_dyn())
+		.from_table(MC::table_iden())
 		.and_where(Expr::col(CommonSpec::Id).eq(id))
 		.build_sqlx(PostgresQueryBuilder);
 
