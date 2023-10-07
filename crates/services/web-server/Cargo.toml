@@ -20,7 +20,8 @@ serde_with = {version = "3", features = ["time_0_3"]}
 axum = "0.6"
 tower-http = { version = "0.4", features = ["fs"] }
 tower-cookies = "0.9"
-modql = {version = "0.3.0-alpha.2", features = ["with-sea-query"]}
+modql = {version = "0.3.0-alpha.3", features = ["with-sea-query"]}
+# modql = {path = "/Users/jeremychone/_jeremy/_projects/_modql/rust-modql", features = ["with-sea-query"]}
 # -- Others
 uuid = {version = "1", features = ["v4", "fast-rng"]}
 async-trait = "0.1"

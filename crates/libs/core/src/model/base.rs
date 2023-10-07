@@ -3,10 +3,11 @@ use crate::model::ModelManager;
 use crate::model::{Error, Result};
 use lib_base::time::now_utc;
 use modql::field::{Field, Fields, HasFields};
-use modql::filter::SeaFilter;
 use modql::sea_utils::SIden;
 use modql::ListOptions;
-use sea_query::{DynIden, Expr, Iden, IntoIden, PostgresQueryBuilder, Query};
+use sea_query::{
+	Condition, DynIden, Expr, Iden, IntoIden, PostgresQueryBuilder, Query,
+};
 use sea_query_binder::SqlxBinder;
 use sqlx::postgres::PgRow;
 use sqlx::FromRow;
@@ -95,7 +96,7 @@ pub async fn list<MC, E, F>(
 ) -> Result<Vec<E>>
 where
 	MC: DbBmc,
-	F: SeaFilter,
+	F: Into<Condition>,
 	E: for<'r> FromRow<'r, PgRow> + Unpin + Send,
 	E: HasFields,
 {
@@ -105,7 +106,7 @@ where
 	let mut query = Query::select();
 	query.from(MC::table_iden()).columns(E::field_column_refs());
 	// condition from filter
-	if let Some(cond) = filter.map(SeaFilter::into_sea_condition) {
+	if let Some(cond) = filter.map(|f| f.into()) {
 		query.cond_where(cond);
 	}
 	// list options
