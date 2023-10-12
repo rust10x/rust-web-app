@@ -1,11 +1,19 @@
+// region:    --- Modules
+
+mod error;
+
+pub use self::error::{Error, Result};
+
 use crate::config;
-use crate::crypt::{encrypt_into_b64u, EncryptContent, Error, Result};
-use crate::utils::{
-	b64u_decode, b64u_decode_to_string, b64u_encode, now_utc, now_utc_plus_sec_str,
-	parse_utc,
-};
+use crate::utils::{b64u_decode_to_string, b64u_encode};
+use crate::utils::{now_utc, now_utc_plus_sec_str, parse_utc};
+use hmac::{Hmac, Mac};
+use sha2::Sha512;
 use std::fmt::Display;
 use std::str::FromStr;
+use uuid::Uuid;
+
+// endregion: --- Modules
 
 // region:    --- Token Type
 
@@ -24,16 +32,16 @@ impl FromStr for Token {
 	fn from_str(token_str: &str) -> std::result::Result<Self, Self::Err> {
 		let splits: Vec<&str> = token_str.split('.').collect();
 		if splits.len() != 3 {
-			return Err(Error::TokenInvalidFormat);
+			return Err(Error::InvalidFormat);
 		}
 		let (ident_b64u, exp_b64u, sign_b64u) = (splits[0], splits[1], splits[2]);
 
 		Ok(Self {
 			ident: b64u_decode_to_string(ident_b64u)
-				.map_err(|_| Error::TokenCannotDecodeIdent)?,
+				.map_err(|_| Error::CannotDecodeIdent)?,
 
 			exp: b64u_decode_to_string(exp_b64u)
-				.map_err(|_| Error::TokenCannotDecodeExp)?,
+				.map_err(|_| Error::CannotDecodeExp)?,
 
 			sign_b64u: sign_b64u.to_string(),
 		})
@@ -56,12 +64,12 @@ impl Display for Token {
 
 // region:    --- Web Token Gen and Validation
 
-pub fn generate_web_token(user: &str, salt: &str) -> Result<Token> {
+pub fn generate_web_token(user: &str, salt: Uuid) -> Result<Token> {
 	let config = &config();
 	_generate_token(user, config.TOKEN_DURATION_SEC, salt, &config.TOKEN_KEY)
 }
 
-pub fn validate_web_token(origin_token: &Token, salt: &str) -> Result<()> {
+pub fn validate_web_token(origin_token: &Token, salt: Uuid) -> Result<()> {
 	let config = &config();
 	_validate_token_sign_and_exp(origin_token, salt, &config.TOKEN_KEY)?;
 
@@ -75,7 +83,7 @@ pub fn validate_web_token(origin_token: &Token, salt: &str) -> Result<()> {
 fn _generate_token(
 	ident: &str,
 	duration_sec: f64,
-	salt: &str,
+	salt: Uuid,
 	key: &[u8],
 ) -> Result<Token> {
 	// -- Compute the two first components.
@@ -94,7 +102,7 @@ fn _generate_token(
 
 fn _validate_token_sign_and_exp(
 	origin_token: &Token,
-	salt: &str,
+	salt: Uuid,
 	key: &[u8],
 ) -> Result<()> {
 	// -- Validate signature.
@@ -102,16 +110,15 @@ fn _validate_token_sign_and_exp(
 		_token_sign_into_b64u(&origin_token.ident, &origin_token.exp, salt, key)?;
 
 	if new_sign_b64u != origin_token.sign_b64u {
-		return Err(Error::TokenSignatureNotMatching);
+		return Err(Error::SignatureNotMatching);
 	}
 
 	// -- Validate expiration.
-	let origin_exp =
-		parse_utc(&origin_token.exp).map_err(|_| Error::TokenExpNotIso)?;
+	let origin_exp = parse_utc(&origin_token.exp).map_err(|_| Error::ExpNotIso)?;
 	let now = now_utc();
 
 	if origin_exp < now {
-		return Err(Error::TokenExpired);
+		return Err(Error::Expired);
 	}
 
 	Ok(())
@@ -122,19 +129,25 @@ fn _validate_token_sign_and_exp(
 fn _token_sign_into_b64u(
 	ident: &str,
 	exp: &str,
-	salt: &str,
+	salt: Uuid,
 	key: &[u8],
 ) -> Result<String> {
 	let content = format!("{}.{}", b64u_encode(ident), b64u_encode(exp));
-	let signature = encrypt_into_b64u(
-		key,
-		&EncryptContent {
-			content,
-			salt: salt.to_string(),
-		},
-	)?;
 
-	Ok(signature)
+	// -- Create a HMAC-SHA-512 from key.
+	let mut hmac_sha512 = Hmac::<Sha512>::new_from_slice(key)
+		.map_err(|_| Error::HmacFailNewFromSlice)?;
+
+	// -- Add content.
+	hmac_sha512.update(content.as_bytes());
+	hmac_sha512.update(salt.as_bytes());
+
+	// -- Finalize and b64u encode.
+	let hmac_result = hmac_sha512.finalize();
+	let result_bytes = hmac_result.into_bytes();
+	let result = b64u_encode(result_bytes);
+
+	Ok(result)
 }
 
 // endregion: --- (private) Token Gen and Validation
@@ -188,7 +201,8 @@ mod tests {
 	fn test_validate_web_token_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let fx_user = "user_one";
-		let fx_salt = "pepper";
+		let fx_salt =
+			Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453").unwrap();
 		let fx_duration_sec = 0.02; // 20ms
 		let token_key = &config().TOKEN_KEY;
 		let fx_token =
@@ -208,7 +222,8 @@ mod tests {
 	fn test_validate_web_token_err_expired() -> Result<()> {
 		// -- Setup & Fixtures
 		let fx_user = "user_one";
-		let fx_salt = "pepper";
+		let fx_salt =
+			Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453").unwrap();
 		let fx_duration_sec = 0.01; // 10ms
 		let token_key = &config().TOKEN_KEY;
 		let fx_token =
@@ -220,8 +235,8 @@ mod tests {
 
 		// -- Check
 		assert!(
-			matches!(res, Err(Error::TokenExpired)),
-			"Should have matched `Err(Error::TokenExpired)` but was `{res:?}`"
+			matches!(res, Err(Error::Expired)),
+			"Should have matched `Err(Error::Expired)` but was `{res:?}`"
 		);
 
 		Ok(())

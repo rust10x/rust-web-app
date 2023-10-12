@@ -1,13 +1,14 @@
-#![allow(unused)] // For early development.
+// #![allow(unused)] // For early development.
 
 // region:    --- Modules
 
 mod config;
-mod crypt;
 mod ctx;
 mod error;
 mod log;
 mod model;
+mod pwd;
+mod token;
 mod utils;
 mod web;
 // #[cfg(test)] // Commented during early development.
@@ -20,8 +21,6 @@ use crate::model::ModelManager;
 use crate::web::mw_auth::{mw_ctx_require, mw_ctx_resolve};
 use crate::web::mw_res_map::mw_reponse_map;
 use crate::web::{routes_login, routes_static, rpc};
-use axum::response::Html;
-use axum::routing::get;
 use axum::{middleware, Router};
 use std::net::SocketAddr;
 use tower_cookies::CookieManagerLayer;
