@@ -20,7 +20,8 @@ pub struct ContentToHash {
 
 // endregion: --- Types
 
-// region:    --- Publish Functions
+// region:    --- Public Functions
+
 /// Encrypt the password with the default scheme.
 pub fn hash_pwd(to_hash: &ContentToHash) -> Result<String> {
 	let key = &config().PWD_KEY;
@@ -40,4 +41,5 @@ pub fn validate_pwd(enc_content: &ContentToHash, pwd_ref: &str) -> Result<()> {
 		Err(Error::NotMatching)
 	}
 }
-// endregion: --- Publish Functions
+
+// endregion: --- Public Functions
