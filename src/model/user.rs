@@ -33,7 +33,7 @@ pub struct UserForLogin {
 	pub username: String,
 
 	// -- pwd and token info
-	pub pwd: Option<String>, // encrypted, #_scheme_id_#....
+	pub pwd: Option<String>, // hashed with #_scheme_id_#....
 	pub pwd_salt: Uuid,
 	pub token_salt: Uuid,
 }
