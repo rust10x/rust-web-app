@@ -1,8 +1,15 @@
+// region:    --- Modules
+
+mod error;
+
+pub use self::error::{Error, Result};
+
 use crate::utils::b64u_decode;
-use crate::{Error, Result};
 use std::env;
 use std::str::FromStr;
 use std::sync::OnceLock;
+
+// endregion: --- Modules
 
 pub fn config() -> &'static Config {
 	static INSTANCE: OnceLock<Config> = OnceLock::new();
@@ -48,14 +55,14 @@ impl Config {
 }
 
 fn get_env(name: &'static str) -> Result<String> {
-	env::var(name).map_err(|_| Error::ConfigMissingEnv(name))
+	env::var(name).map_err(|_| Error::MissingEnv(name))
 }
 
 fn get_env_parse<T: FromStr>(name: &'static str) -> Result<T> {
 	let val = get_env(name)?;
-	val.parse::<T>().map_err(|_| Error::ConfigWrongFormat(name))
+	val.parse::<T>().map_err(|_| Error::WrongFormat(name))
 }
 
 fn get_env_b64u_as_u8s(name: &'static str) -> Result<Vec<u8>> {
-	b64u_decode(&get_env(name)?).map_err(|_| Error::ConfigWrongFormat(name))
+	b64u_decode(&get_env(name)?).map_err(|_| Error::WrongFormat(name))
 }
