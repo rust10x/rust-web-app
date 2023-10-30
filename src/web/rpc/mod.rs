@@ -1,6 +1,9 @@
 // region:    --- Modules
 
+mod params;
 mod task_rpc;
+
+use params::*;
 
 use crate::ctx::Ctx;
 use crate::model::ModelManager;
@@ -18,7 +21,7 @@ use tracing::debug;
 
 // region:    --- RPC Types
 
-/// JSON-RPC Request Body.
+/// The raw JSON-RPC request object, serving as the foundation for RPC routing.
 #[derive(Deserialize)]
 struct RpcRequest {
 	id: Option<Value>,
@@ -26,20 +29,12 @@ struct RpcRequest {
 	params: Option<Value>,
 }
 
-#[derive(Deserialize)]
-pub struct ParamsForCreate<D> {
-	data: D,
-}
-
-#[derive(Deserialize)]
-pub struct ParamsForUpdate<D> {
-	id: i64,
-	data: D,
-}
-
-#[derive(Deserialize)]
-pub struct ParamsIded {
-	id: i64,
+/// RPC basic information containing the rpc request
+/// id and method for additional logging purposes.
+#[derive(Debug)]
+pub struct RpcInfo {
+	pub id: Option<Value>,
+	pub method: String,
 }
 
 // endregion: --- RPC Types
@@ -66,13 +61,6 @@ async fn rpc_handler(
 	res.extensions_mut().insert(rpc_info);
 
 	res
-}
-
-/// RPC basic information holding the id and method for further logging.
-#[derive(Debug)]
-pub struct RpcInfo {
-	pub id: Option<Value>,
-	pub method: String,
 }
 
 macro_rules! exec_rpc_fn {
