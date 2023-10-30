@@ -1,5 +1,5 @@
 use crate::pwd::{ContentToHash, Error, Result};
-use crate::utils::b64u_encode;
+use crate::utils::b64::b64u_encode;
 use hmac::{Hmac, Mac};
 use sha2::Sha512;
 

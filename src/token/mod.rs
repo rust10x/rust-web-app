@@ -5,8 +5,8 @@ mod error;
 pub use self::error::{Error, Result};
 
 use crate::config;
-use crate::utils::{b64u_decode_to_string, b64u_encode};
-use crate::utils::{now_utc, now_utc_plus_sec_str, parse_utc};
+use crate::utils::b64::{b64u_decode_to_string, b64u_encode};
+use crate::utils::time::{now_utc, now_utc_plus_sec_str, parse_utc};
 use hmac::{Hmac, Mac};
 use sha2::Sha512;
 use std::fmt::Display;
