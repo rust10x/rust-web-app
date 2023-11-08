@@ -36,6 +36,7 @@ base64 = "0.21"
 uuid = {version = "1", features = ["v4","fast-rng",]}
 time = "0.3"
 strum_macros = "0.25"
+derive_more = {version = "1.0.0-beta", features = ["from"] }
 
 
 [dev-dependencies]
