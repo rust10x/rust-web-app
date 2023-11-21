@@ -1,9 +1,9 @@
 use crate::ctx::Ctx;
 use crate::model::task::{Task, TaskBmc, TaskFilter, TaskForCreate, TaskForUpdate};
 use crate::model::ModelManager;
-use crate::web::rpc::params::ParamsList;
-use crate::web::rpc::{ParamsForCreate, ParamsForUpdate, ParamsIded};
-use crate::web::Result;
+use crate::rpc::params::ParamsList;
+use crate::rpc::Result;
+use crate::rpc::{ParamsForCreate, ParamsForUpdate, ParamsIded};
 
 pub async fn create_task(
 	ctx: Ctx,

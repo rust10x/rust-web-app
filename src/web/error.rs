@@ -1,4 +1,4 @@
-use crate::{model, pwd, token, web};
+use crate::{model, pwd, rpc, token, web};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use derive_more::From;
@@ -12,15 +12,6 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[derive(Debug, Serialize, From, strum_macros::AsRefStr)]
 #[serde(tag = "type", content = "data")]
 pub enum Error {
-	// -- RPC
-	RpcMethodUnknown(String),
-	RpcMissingParams {
-		rpc_method: String,
-	},
-	RpcFailJsonParams {
-		rpc_method: String,
-	},
-
 	// -- Login
 	LoginFailUsernameNotFound,
 	LoginFailUserHasNoPwd {
@@ -41,6 +32,8 @@ pub enum Error {
 	Pwd(pwd::Error),
 	#[from]
 	Token(token::Error),
+	#[from]
+	Rpc(rpc::Error),
 
 	// -- External Modules
 	#[from]

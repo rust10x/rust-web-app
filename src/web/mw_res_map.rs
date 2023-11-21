@@ -1,7 +1,7 @@
 use crate::ctx::Ctx;
 use crate::log::log_request;
+use crate::rpc::RpcInfo;
 use crate::web;
-use crate::web::rpc::RpcInfo;
 use axum::http::{Method, Uri};
 use axum::response::{IntoResponse, Response};
 use axum::Json;

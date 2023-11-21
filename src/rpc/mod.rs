@@ -1,21 +1,17 @@
 // region:    --- Modules
 
+mod error;
 mod params;
 mod task_rpc;
 
+pub use self::error::{Error, Result};
 use params::*;
 
 use crate::ctx::Ctx;
 use crate::model::ModelManager;
-use crate::web::rpc::task_rpc::{create_task, delete_task, list_tasks, update_task};
-use crate::web::{Error, Result};
-use axum::extract::State;
-use axum::response::{IntoResponse, Response};
-use axum::routing::post;
-use axum::{Json, Router};
+use crate::rpc::task_rpc::{create_task, delete_task, list_tasks, update_task};
 use serde::Deserialize;
-use serde_json::{from_value, json, to_value, Value};
-use tracing::debug;
+use serde_json::{from_value, to_value, Value};
 
 // endregion: --- Modules
 
@@ -23,10 +19,10 @@ use tracing::debug;
 
 /// The raw JSON-RPC request object, serving as the foundation for RPC routing.
 #[derive(Deserialize)]
-struct RpcRequest {
-	id: Option<Value>,
-	method: String,
-	params: Option<Value>,
+pub struct RpcRequest {
+	pub id: Option<Value>,
+	pub method: String,
+	pub params: Option<Value>,
 }
 
 /// RPC basic information containing the rpc request
@@ -35,32 +31,6 @@ struct RpcRequest {
 pub struct RpcInfo {
 	pub id: Option<Value>,
 	pub method: String,
-}
-
-// endregion: --- RPC Types
-
-pub fn routes(mm: ModelManager) -> Router {
-	Router::new()
-		.route("/rpc", post(rpc_handler))
-		.with_state(mm)
-}
-
-async fn rpc_handler(
-	State(mm): State<ModelManager>,
-	ctx: Ctx,
-	Json(rpc_req): Json<RpcRequest>,
-) -> Response {
-	// -- Create the RPC Info to be set to the response.extensions.
-	let rpc_info = RpcInfo {
-		id: rpc_req.id.clone(),
-		method: rpc_req.method.clone(),
-	};
-
-	// -- Exec & Store RpcInfo in response.
-	let mut res = _rpc_handler(ctx, mm, rpc_req).await.into_response();
-	res.extensions_mut().insert(rpc_info);
-
-	res
 }
 
 macro_rules! exec_rpc_fn {
@@ -73,7 +43,7 @@ macro_rules! exec_rpc_fn {
 		let params = from_value(params).map_err(|_| Error::RpcFailJsonParams {
 			rpc_method: rpc_fn_name.to_string(),
 		})?;
-		$rpc_fn($ctx, $mm, params).await.map(to_value)??
+		$rpc_fn($ctx, $mm, params).await.map(to_value)?? // FIXME
 	}};
 
 	// Without Params
@@ -82,19 +52,15 @@ macro_rules! exec_rpc_fn {
 	};
 }
 
-async fn _rpc_handler(
+pub async fn exec_rpc(
 	ctx: Ctx,
 	mm: ModelManager,
 	rpc_req: RpcRequest,
-) -> Result<Json<Value>> {
-	let RpcRequest {
-		id: rpc_id,
-		method: rpc_method,
-		params: rpc_params,
-	} = rpc_req;
+) -> Result<Value> {
+	let rpc_method = rpc_req.method;
+	let rpc_params = rpc_req.params;
 
-	debug!("{:<12} - _rpc_handler - method: {rpc_method}", "HANDLER");
-
+	// -- Exec & Store RpcInfo in response.
 	let result_json: Value = match rpc_method.as_str() {
 		// -- Task RPC methods.
 		"create_task" => exec_rpc_fn!(create_task, ctx, mm, rpc_params),
@@ -106,10 +72,7 @@ async fn _rpc_handler(
 		_ => return Err(Error::RpcMethodUnknown(rpc_method)),
 	};
 
-	let body_response = json!({
-		"id": rpc_id,
-		"result": result_json
-	});
-
-	Ok(Json(body_response))
+	Ok(result_json)
 }
+
+// endregion: --- RPC Types
