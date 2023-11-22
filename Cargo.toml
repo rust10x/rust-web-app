@@ -1,50 +1,19 @@
-[package]
-name = "rust-web-app"
-version = "0.1.2"
-edition = "2021"
-rust-version = "1.70"
-authors = ["Jeremy Chone <jeremy.chone@gmail.com>"]
-license = "MIT OR Apache-2.0"
-description = "Rust10x rust-web-app production blueprint."
-homepage="https://rust10x.com/web-app"
-repository = "https://github.com/rust10x/rust-web-app"
+[workspace.lints.rust]
+unsafe_code = "forbid"
+# unused = "allow" # For experimental dev.
 
+[workspace]
+resolver = "2"
+members = [
+    # -- Application Libraries
+    "crates/libs/lib-utils", # e.g., base64, time.
+    "crates/libs/lib-rpc", # e.g., rpc routing.
+    "crates/libs/lib-auth", # e.g., for pwd, token.
+    "crates/libs/lib-core", # e.g., model, ctx, config.
 
-[dependencies]
-# -- Async
-tokio = { version = "1", features = ["full"] }
-async-trait = "0.1"
-# -- Json
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-serde_with = "3"
-# -- Web
-axum = "0.6"
-# Note: As of 2023-11-21 axum does not seem to support tower-http 0.5
-#       See axum issue: https://github.com/tokio-rs/axum/issues/2333
-tower-http = { version = "0.4", features = ["fs"] }
-tower-cookies = "0.9"
-# -- Data
-sqlx = { version = "0.7", features = [ "runtime-tokio", "postgres", "uuid" ] }
-sea-query = "0.30"
-sea-query-binder = { version = "0.5", features = ["sqlx-postgres", "with-uuid" ] }
-modql = {version = "0.3", features = ["with-sea-query"]}
-# -- Tracing
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-# -- Hashing (pwd scheme-01 &token)
-hmac = "0.12"
-sha2 = "0.10"
-# -- Others
-base64 = "0.21"
-uuid = {version = "1", features = ["v4","fast-rng",]}
-time = "0.3"
-strum_macros = "0.25"
-derive_more = {version = "1.0.0-beta", features = ["from"] }
+    # -- Application Services
+    "crates/services/web-server",
 
-
-[dev-dependencies]
-anyhow = "1"
-httpc-test = "0.1"
-serial_test = "2"
-rand = "0.8" # For examples/gen-key
+    # -- Tools
+    "crates/tools/gen-key",    
+]

@@ -11,6 +11,8 @@ More info at: https://rust10x.com/web-app
 
 - [Episode 02 - Sea-Query (sql builder) & modql (mongodb like filter)](https://www.youtube.com/watch?v=-dMH9UiwKqg&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
 
+- [Episode 03 - Cargo Workspace (multi-crates)](https://www.youtube.com/watch?v=zUxF0kvydJs&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
+
 - Other Related videos: 
 	- [Rust Axum Full Course](https://youtube.com/watch?v=XZtlD_m59sM&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
 
@@ -38,10 +40,20 @@ ALTER DATABASE postgres SET log_statement = 'all';
 
 ```sh
 # Terminal 1 - To run the server.
-cargo watch -q -c -w src/ -w .cargo/ -x "run"
+cargo watch -q -c -w crates/services/web-server/src/ -w crates/libs/ -w .cargo/ -x "run -p web-server"
 
 # Terminal 2 - To run the quick_dev.
-cargo watch -q -c -w examples/ -x "run --example quick_dev"
+cargo watch -q -c -w crates/services/web-server/examples/ -x "run -p web-server --example quick_dev"
+```
+
+## Dev
+
+```sh
+# Terminal 1 - To run the server.
+cargo run -p web-server
+
+# Terminal 2 - To run the tests.
+cargo run -p web-server --example quick_dev
 ```
 
 ## Unit Test (watch)
@@ -50,17 +62,7 @@ cargo watch -q -c -w examples/ -x "run --example quick_dev"
 cargo watch -q -c -x "test -- --nocapture"
 
 # Specific test with filter.
-cargo watch -q -c -x "test model::task::tests::test_create -- --nocapture"
-```
-
-## Dev
-
-```sh
-# Terminal 1 - To run the server.
-cargo run
-
-# Terminal 2 - To run the tests.
-cargo run --example quick_dev
+cargo watch -q -c -x "test -p lib-core test_create -- --nocapture"
 ```
 
 ## Unit Test
@@ -68,7 +70,13 @@ cargo run --example quick_dev
 ```sh
 cargo test -- --nocapture
 
-cargo watch -q -c -x test model::task::tests::test_create -- --nocapture
+cargo watch -q -c -x "test -p lib-core model::task::tests::test_create -- --nocapture"
+```
+
+## Tools
+
+```sh
+cargo run -p gen-key
 ```
 
 <br />

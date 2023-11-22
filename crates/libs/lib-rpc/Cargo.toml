@@ -1,0 +1,24 @@
+[package]
+name = "lib-rpc"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+# -- App Libs
+lib-core = { path = "../../libs/lib-core"}
+# -- Async
+tokio = { version = "1", features = ["full"] }
+# -- Json
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_with = "3"
+# -- Data
+modql = {version = "0.3.4", features = ["with-sea-query"]}
+# -- Others
+derive_more = {version = "1.0.0-beta", features = ["from"] }
