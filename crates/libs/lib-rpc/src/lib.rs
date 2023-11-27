@@ -35,7 +35,7 @@ macro_rules! exec_rpc_fn {
 		let params = from_value(params).map_err(|_| Error::RpcFailJsonParams {
 			rpc_method: rpc_fn_name.to_string(),
 		})?;
-		$rpc_fn($ctx, $mm, params).await.map(to_value)?? // FIXME
+		$rpc_fn($ctx, $mm, params).await.map(to_value)??
 	}};
 
 	// Without Params

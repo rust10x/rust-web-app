@@ -8,6 +8,7 @@ use lib_core::ctx::Ctx;
 use lib_core::model::ModelManager;
 use lib_rpc::{exec_rpc, RpcRequest};
 use serde_json::{json, Value};
+use std::sync::Arc;
 use tracing::debug;
 
 pub fn routes(mm: ModelManager) -> Router {
@@ -38,7 +39,7 @@ async fn rpc_handler(
 
 	// -- Exec & Store RpcInfo in response.
 	let mut res = _rpc_handler(ctx, mm, rpc_req).await.into_response();
-	res.extensions_mut().insert(rpc_info);
+	res.extensions_mut().insert(Arc::new(rpc_info));
 
 	res
 }

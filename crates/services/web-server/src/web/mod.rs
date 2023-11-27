@@ -30,7 +30,7 @@ fn set_token_cookie(cookies: &Cookies, user: &str, salt: Uuid) -> Result<()> {
 }
 
 fn remove_token_cookie(cookies: &Cookies) -> Result<()> {
-	let mut cookie = Cookie::named(AUTH_TOKEN);
+	let mut cookie = Cookie::from(AUTH_TOKEN);
 	cookie.set_path("/");
 
 	cookies.remove(cookie);
