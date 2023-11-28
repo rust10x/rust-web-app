@@ -40,7 +40,7 @@ pub enum Error {
 
 	// -- External Modules
 	#[from]
-	SerdeJson(#[serde_as(as = "DisplayFromStr")] Arc<serde_json::Error>),
+	SerdeJson(#[serde_as(as = "DisplayFromStr")] serde_json::Error),
 }
 
 // region:    --- Axum IntoResponse
