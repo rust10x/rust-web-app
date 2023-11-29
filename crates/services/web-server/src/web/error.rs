@@ -79,7 +79,6 @@ impl Error {
 	pub fn client_status_and_error(&self) -> (StatusCode, ClientError) {
 		use web::Error::*;
 
-		#[allow(unreachable_patterns)]
 		match self {
 			// -- Login
 			LoginFailUsernameNotFound

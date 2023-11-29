@@ -1,5 +1,3 @@
-// #![allow(unused)] // For early development.
-
 // region:    --- Modules
 
 mod config;

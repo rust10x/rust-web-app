@@ -5,13 +5,14 @@ More info at: https://rust10x.com/web-app
 ## Rust10x Web App YouTube Videos:
 
 - [Episode 01 - Rust Web App - Base Production Code](https://youtube.com/watch?v=3cA_mk4vdWY&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
-    - [Topic video - Code clean -  `#[cfg_attr(...)]` for unit test](https://www.youtube.com/watch?v=JdLi69mWIIE&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
+    - [Topic video - Code clean -  `#[cfg_attr(...)]` for unit test](https://www.youtube.com/watch?v=DCPs5VRTK-U&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
 	- [Topic video - The Reasoning Behind Differentiating ModelControllers and ModelManager](https://www.youtube.com/watch?v=JdLi69mWIIE&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
 	- [Topic video - Base64Url - Understanding the Usage and Significance of Base64URL](https://www.youtube.com/watch?v=-9K7zNgsbP0&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
 
 - [Episode 02 - Sea-Query (sql builder) & modql (mongodb like filter)](https://www.youtube.com/watch?v=-dMH9UiwKqg&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
 
 - [Episode 03 - Cargo Workspace (multi-crates)](https://www.youtube.com/watch?v=zUxF0kvydJs&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
+	- [AI-Voice-Remastered](https://www.youtube.com/watch?v=iCGIqEWWTcA&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
 
 - Other Related videos: 
 	- [Rust Axum Full Course](https://youtube.com/watch?v=XZtlD_m59sM&list=PL7r-PXl6ZPcCIOFaL7nVHXZvBmHNhrh_Q)
