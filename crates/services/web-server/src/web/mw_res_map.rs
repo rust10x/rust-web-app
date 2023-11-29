@@ -52,7 +52,6 @@ pub async fn mw_reponse_map(
 				// Build the new response from the client_error_body
 				(*status_code, Json(client_error_body)).into_response()
 			});
-
 	// -- Build and log the server log line.
 	let client_error = client_status_error.unzip().1;
 	// TODO: Need to hander if log_request fail (but should not fail request)
@@ -60,9 +59,9 @@ pub async fn mw_reponse_map(
 		uuid,
 		req_method,
 		uri,
-		rpc_info,
+		rpc_info.map(Arc::as_ref),
 		ctx,
-		web_error,
+		web_error.map(Arc::as_ref),
 		client_error,
 	)
 	.await;
