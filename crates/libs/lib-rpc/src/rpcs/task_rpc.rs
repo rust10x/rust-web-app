@@ -1,11 +1,22 @@
-use crate::params::ParamsList;
+use crate::router::RpcRouter;
+use crate::rpc_router;
 use crate::Result;
-use crate::{ParamsForCreate, ParamsForUpdate, ParamsIded};
+use crate::{ParamsForCreate, ParamsForUpdate, ParamsIded, ParamsList};
 use lib_core::ctx::Ctx;
 use lib_core::model::task::{
 	Task, TaskBmc, TaskFilter, TaskForCreate, TaskForUpdate,
 };
 use lib_core::model::ModelManager;
+
+pub fn rpc_router() -> RpcRouter {
+	rpc_router!(
+		// Same as RpcRouter::new().add...
+		create_task,
+		list_tasks,
+		update_task,
+		delete_task,
+	)
+}
 
 pub async fn create_task(
 	ctx: Ctx,

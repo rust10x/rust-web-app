@@ -3,6 +3,7 @@
 mod error;
 pub mod mw_auth;
 pub mod mw_res_map;
+pub mod mw_stamp;
 pub mod routes_login;
 pub mod routes_rpc;
 pub mod routes_static;

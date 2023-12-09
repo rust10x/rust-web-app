@@ -1,4 +1,4 @@
-#![allow(unused)] // For examples/.
+#![allow(unused)] // For example code.
 
 use anyhow::Result;
 use serde_json::json;
@@ -18,9 +18,24 @@ async fn main() -> Result<()> {
 	);
 	req_login.await?.print().await?;
 
-	// -- Create Tasks
+	let req_create_project = hc.do_post(
+		"/api/rpc",
+		json!({
+			"id": 1,
+			"method": "create_project",
+			"params": {
+				"data": {
+					"name": "project AAA"
+				}
+			}
+		}),
+	);
+	let result = req_create_project.await?;
+	result.print().await?;
+	let project_id = result.json_value::<i64>("/result/id")?;
+
 	let mut task_ids: Vec<i64> = Vec::new();
-	for i in 0..=4 {
+	for i in 1..=5 {
 		let req_create_task = hc.do_post(
 			"/api/rpc",
 			json!({
@@ -28,6 +43,7 @@ async fn main() -> Result<()> {
 				"method": "create_task",
 				"params": {
 					"data": {
+						"project_id": project_id,
 						"title": format!("task AAA {i}")
 					}
 				}
@@ -37,14 +53,13 @@ async fn main() -> Result<()> {
 		task_ids.push(result.json_value::<i64>("/result/id")?);
 	}
 
-	// -- Update first Task
 	let req_update_task = hc.do_post(
 		"/api/rpc",
 		json!({
 			"id": 1,
 			"method": "update_task",
 			"params": {
-				"id": task_ids[0],
+				"id": task_ids[0], // The first task created.
 				"data": {
 					"title": "task BB"
 				}
@@ -53,39 +68,62 @@ async fn main() -> Result<()> {
 	);
 	req_update_task.await?.print().await?;
 
-	// -- Delete second Task
 	let req_delete_task = hc.do_post(
 		"/api/rpc",
 		json!({
 			"id": 1,
 			"method": "delete_task",
 			"params": {
-				"id": task_ids[1] // Second task
+				"id": task_ids[1] // The second task created.
 			}
 		}),
 	);
 	req_delete_task.await?.print().await?;
 
-	// -- List Tasks with filters
-	let req_list_tasks = hc.do_post(
+	let req_list_all_tasks = hc.do_post(
 		"/api/rpc",
 		json!({
 			"id": 1,
 			"method": "list_tasks",
 			"params": {
-				"filters": [{
-					"title": {"$endsWith": "BB"},
-					"done": false,
-				},{
-					"id": {"$in": [task_ids[2], task_ids[3]]}
-				}],
+				"filters": {
+					"project_id": project_id
+				},
 				"list_options": {
-					"order_bys": "!id"
+					"order_bys": "!title"
 				}
 			}
 		}),
 	);
-	req_list_tasks.await?.print().await?;
+	req_list_all_tasks.await?.print().await?;
+
+	let req_list_b_tasks = hc.do_post(
+		"/api/rpc",
+		json!({
+			"id": 1,
+			"method": "list_tasks",
+			"params": {
+				"filters": [
+				{
+					"project_id": project_id,
+					"title": {"$contains": "BB"},
+				},
+				// Shows how to use other $in
+				{
+
+					"project_id": { "$in": [project_id] },
+					"title": {"$in": ["task AAA 3", "task AAA 4"]}
+				},
+				// This won't match any projects, so, won't return anything.
+				{
+					"project_id": { "$in": [ 123, 124]},
+					"title": {"$in": ["task AAA 2", "task AAA 5"]}
+				}
+				]
+			}
+		}),
+	);
+	req_list_b_tasks.await?.print().await?;
 
 	let req_logoff = hc.do_post(
 		"/api/logoff",

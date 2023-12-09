@@ -1,10 +1,10 @@
 use crate::ctx::Ctx;
-use crate::model::base::{self, DbBmc};
+use crate::model::base::{self, add_timestamps_for_update, DbBmc};
 use crate::model::ModelManager;
 use crate::model::Result;
 use lib_auth::pwd::{self, ContentToHash};
-use modql::field::{Fields, HasFields};
-use sea_query::{Expr, Iden, PostgresQueryBuilder, Query, SimpleExpr};
+use modql::field::{Field, Fields, HasFields};
+use sea_query::{Expr, Iden, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgRow;
@@ -35,7 +35,7 @@ pub struct UserForLogin {
 	pub username: String,
 
 	// -- pwd and token info
-	pub pwd: Option<String>, // hashed with #_scheme_id_#....
+	pub pwd: Option<String>, // encrypted, #_scheme_id_#....
 	pub pwd_salt: Uuid,
 	pub token_salt: Uuid,
 }
@@ -56,7 +56,7 @@ impl UserBy for User {}
 impl UserBy for UserForLogin {}
 impl UserBy for UserForAuth {}
 
-// Note: Since the entity properties Iden will be given by modql::field::Fields
+// Note: Since the entity properties Iden will be given by modql
 //       UserIden does not have to be exhaustive, but just have the columns
 //       we use in our specific code.
 #[derive(Iden)]
@@ -65,9 +65,9 @@ enum UserIden {
 	Username,
 	Pwd,
 }
-
 // endregion: --- User Types
 
+// region:    --- UserBmc
 pub struct UserBmc;
 
 impl DbBmc for UserBmc {
@@ -99,13 +99,13 @@ impl UserBmc {
 			.columns(E::field_idens())
 			.and_where(Expr::col(UserIden::Username).eq(username));
 
-		// -- Exec query
+		// -- Execute query
 		let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
-		let user = sqlx::query_as_with::<_, E, _>(&sql, values)
+		let entity = sqlx::query_as_with::<_, E, _>(&sql, values)
 			.fetch_optional(db)
 			.await?;
 
-		Ok(user)
+		Ok(entity)
 	}
 
 	pub async fn update_pwd(
@@ -123,11 +123,16 @@ impl UserBmc {
 			salt: user.pwd_salt,
 		})?;
 
+		// -- Prep the data
+		let mut fields = Fields::new(vec![Field::new(UserIden::Pwd, pwd.into())]);
+		add_timestamps_for_update(&mut fields, ctx.user_id());
+
 		// -- Build query
+		let fields = fields.for_sea_update();
 		let mut query = Query::update();
 		query
 			.table(Self::table_ref())
-			.value(UserIden::Pwd, SimpleExpr::from(pwd))
+			.values(fields)
 			.and_where(Expr::col(UserIden::Id).eq(id));
 
 		// -- Exec query
@@ -140,6 +145,8 @@ impl UserBmc {
 		Ok(())
 	}
 }
+
+// endregion: --- UserBmc
 
 // region:    --- Tests
 #[cfg(test)]

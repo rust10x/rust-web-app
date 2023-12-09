@@ -1,7 +1,8 @@
 use crate::ctx::Ctx;
 use crate::model::ModelManager;
 use crate::model::{Error, Result};
-use modql::field::HasFields;
+use lib_utils::time::now_utc;
+use modql::field::{Field, Fields, HasFields};
 use modql::filter::{FilterGroups, ListOptions};
 use modql::SIden;
 use sea_query::{
@@ -11,12 +12,20 @@ use sea_query_binder::SqlxBinder;
 use sqlx::postgres::PgRow;
 use sqlx::FromRow;
 
-const LIST_LIMIT_DEFAULT: i64 = 300;
-const LIST_LIMIT_MAX: i64 = 1000;
+const LIST_LIMIT_DEFAULT: i64 = 1000;
+const LIST_LIMIT_MAX: i64 = 5000;
 
 #[derive(Iden)]
 pub enum CommonIden {
 	Id,
+}
+
+#[derive(Iden)]
+pub enum TimestampIden {
+	Cid,
+	Ctime,
+	Mid,
+	Mtime,
 }
 
 pub trait DbBmc {
@@ -27,10 +36,9 @@ pub trait DbBmc {
 	}
 }
 
-pub fn finalize_list_options(
+pub fn compute_list_options(
 	list_options: Option<ListOptions>,
 ) -> Result<ListOptions> {
-	// When Some, validate limit
 	if let Some(mut list_options) = list_options {
 		// Validate the limit.
 		if let Some(limit) = list_options.limit {
@@ -57,15 +65,16 @@ pub fn finalize_list_options(
 	}
 }
 
-pub async fn create<MC, E>(_ctx: &Ctx, mm: &ModelManager, data: E) -> Result<i64>
+pub async fn create<MC, E>(ctx: &Ctx, mm: &ModelManager, data: E) -> Result<i64>
 where
 	MC: DbBmc,
 	E: HasFields,
 {
 	let db = mm.db();
 
-	// -- Prep data
-	let fields = data.not_none_fields();
+	// -- Extract fields (name / sea-query value expression)
+	let mut fields = data.not_none_fields();
+	add_timestamps_for_create(&mut fields, ctx.user_id());
 	let (columns, sea_values) = fields.for_sea_insert();
 
 	// -- Build query
@@ -116,7 +125,7 @@ where
 pub async fn list<MC, E, F>(
 	_ctx: &Ctx,
 	mm: &ModelManager,
-	filters: Option<F>,
+	filter: Option<F>,
 	list_options: Option<ListOptions>,
 ) -> Result<Vec<E>>
 where
@@ -127,22 +136,21 @@ where
 {
 	let db = mm.db();
 
-	// -- Build query
+	// -- Build the query
 	let mut query = Query::select();
 	query.from(MC::table_ref()).columns(E::field_column_refs());
 
 	// condition from filter
-	if let Some(filters) = filters {
-		let filters: FilterGroups = filters.into();
+	if let Some(filter) = filter {
+		let filters: FilterGroups = filter.into();
 		let cond: Condition = filters.try_into()?;
 		query.cond_where(cond);
 	}
-
 	// list options
-	let list_options = finalize_list_options(list_options)?;
+	let list_options = compute_list_options(list_options)?;
 	list_options.apply_to_sea_query(&mut query);
 
-	// -- Exec query
+	// -- Execute the query
 	let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
 	let entities = sqlx::query_as_with::<_, E, _>(&sql, values)
 		.fetch_all(db)
@@ -152,7 +160,7 @@ where
 }
 
 pub async fn update<MC, E>(
-	_ctx: &Ctx,
+	ctx: &Ctx,
 	mm: &ModelManager,
 	id: i64,
 	data: E,
@@ -163,8 +171,8 @@ where
 {
 	let db = mm.db();
 
-	// -- Prep data
-	let fields = data.not_none_fields();
+	let mut fields = data.not_none_fields();
+	add_timestamps_for_update(&mut fields, ctx.user_id());
 	let fields = fields.for_sea_update();
 
 	// -- Build query
@@ -174,7 +182,7 @@ where
 		.values(fields)
 		.and_where(Expr::col(CommonIden::Id).eq(id));
 
-	// -- Exec query
+	// -- Execute query
 	let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
 	let count = sqlx::query_with(&sql, values)
 		.execute(db)
@@ -204,7 +212,7 @@ where
 		.from_table(MC::table_ref())
 		.and_where(Expr::col(CommonIden::Id).eq(id));
 
-	// -- Exec query
+	// -- Execute query
 	let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
 	let count = sqlx::query_with(&sql, values)
 		.execute(db)
@@ -221,3 +229,26 @@ where
 		Ok(())
 	}
 }
+
+// region:    --- Utils
+
+/// Update the timestamps info for create
+/// (e.g., cid, ctime, and mid, mtime will be updated with the same values)
+pub fn add_timestamps_for_create(fields: &mut Fields, user_id: i64) {
+	let now = now_utc();
+	fields.push(Field::new(TimestampIden::Cid.into_iden(), user_id.into()));
+	fields.push(Field::new(TimestampIden::Ctime.into_iden(), now.into()));
+
+	fields.push(Field::new(TimestampIden::Mid.into_iden(), user_id.into()));
+	fields.push(Field::new(TimestampIden::Mtime.into_iden(), now.into()));
+}
+
+/// Update the timestamps info only for update.
+/// (.e.g., only mid, mtime will be udpated)
+pub fn add_timestamps_for_update(fields: &mut Fields, user_id: i64) {
+	let now = now_utc();
+	fields.push(Field::new(TimestampIden::Mid.into_iden(), user_id.into()));
+	fields.push(Field::new(TimestampIden::Mtime.into_iden(), now.into()));
+}
+
+// endregion: --- Utils

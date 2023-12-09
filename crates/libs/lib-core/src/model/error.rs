@@ -26,9 +26,9 @@ pub enum Error {
 
 	// -- Externals
 	#[from]
-	Sqlx(#[serde_as(as = "DisplayFromStr")] sqlx::Error),
-	#[from]
 	SeaQuery(#[serde_as(as = "DisplayFromStr")] sea_query::error::Error),
+	#[from]
+	Sqlx(#[serde_as(as = "DisplayFromStr")] sqlx::Error),
 	#[from]
 	ModqlIntoSea(#[serde_as(as = "DisplayFromStr")] modql::filter::IntoSeaError),
 }
