@@ -12,6 +12,8 @@ workspace = true
 [dependencies]
 # -- App Libs
 lib-utils = { path = "../../libs/lib-utils"}
+# -- Async
+tokio = { version = "1", features = ["full"] }
 # -- Json
 serde = { version = "1", features = ["derive"] }
 # -- Hashing (pwd-scheme01 & Token)

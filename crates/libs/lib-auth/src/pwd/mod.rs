@@ -1,4 +1,20 @@
-// region:    --- Modules
+//! The pwd module is responsible for hashing and validating hashes.
+//! It follows a multi-scheme hashing code design, allowing each
+//! scheme to provide its own hashing and validation methods.
+//!
+//! Code Design Points:
+//!
+//! - Exposes two public async functions `hash_pwd(...)` and `validate_pwd(...)`
+//! - `ContentToHash` represents the data to be hashed along with the corresponding salt.
+//! - `SchemeStatus` is the result of `validate_pwd` which, upon successful validation, indicates
+//!   whether the password needs to be re-hashed to adopt the latest scheme.
+//! - Internally, the `pwd` module implements a multi-scheme code design with the `Scheme` trait.
+//! - The `Scheme` trait exposes sync functions `hash` and `validate` to be implemented for each scheme.
+//! - The two public async functions `hash_pwd(...)` and `validate_pwd(...)` call the scheme using
+//!   `spawn_blocking` to ensure that long hashing/validation processes do not hinder the execution of smaller tasks.
+//! - Schemes are designed to be agnostic of whether they are in an async or sync context, hence they are async-free.
+
+// region:    --- Modules;
 
 mod error;
 mod scheme;
@@ -15,6 +31,12 @@ use uuid::Uuid;
 
 // region:    --- Types
 
+/// The clean content to hash, with the salt.
+///
+/// Notes:
+///    - Since content is sensitive information, we do NOT implement default debug for this struct.
+///    - The clone is only implement for testing
+#[cfg_attr(test, derive(Clone))]
 pub struct ContentToHash {
 	pub content: String, // Clear content.
 	pub salt: Uuid,
@@ -25,41 +47,56 @@ pub struct ContentToHash {
 // region:    --- Public Functions
 
 /// Hash the password with the default scheme.
-pub fn hash_pwd(to_hash: &ContentToHash) -> Result<String> {
-	hash_for_scheme(DEFAULT_SCHEME, to_hash)
+pub async fn hash_pwd(to_hash: ContentToHash) -> Result<String> {
+	tokio::task::spawn_blocking(move || hash_for_scheme(DEFAULT_SCHEME, to_hash))
+		.await
+		.map_err(|_| Error::FailSpawnBlockForHash)?
 }
 
 /// Validate if an ContentToHash matches.
-pub fn validate_pwd(to_hash: &ContentToHash, pwd_ref: &str) -> Result<SchemeStatus> {
+pub async fn validate_pwd(
+	to_hash: ContentToHash,
+	pwd_ref: String,
+) -> Result<SchemeStatus> {
 	let PwdParts {
 		scheme_name,
 		hashed,
 	} = pwd_ref.parse()?;
 
-	validate_for_scheme(&scheme_name, to_hash, &hashed)?;
-
-	if scheme_name == DEFAULT_SCHEME {
-		Ok(SchemeStatus::Ok)
+	// Note: We do first, so that we do not have to clonse the scheme_name.
+	let scheme_status = if scheme_name == DEFAULT_SCHEME {
+		SchemeStatus::Ok
 	} else {
-		Ok(SchemeStatus::Outdated)
-	}
+		SchemeStatus::Outdated
+	};
+
+	// Note: Since validate might take some time depending on algo
+	//       doing a spawn_blocking to avoid
+	tokio::task::spawn_blocking(move || {
+		validate_for_scheme(&scheme_name, to_hash, hashed)
+	})
+	.await
+	.map_err(|_| Error::FailSpawnBlockForValidate)??;
+
+	// validate_for_scheme(&scheme_name, to_hash, &hashed).await?;
+	Ok(scheme_status)
 }
 // endregion: --- Public Functions
 
 // region:    --- Privates
 
-fn hash_for_scheme(scheme_name: &str, to_hash: &ContentToHash) -> Result<String> {
-	let pwd_hashed = get_scheme(scheme_name)?.hash(to_hash)?;
+fn hash_for_scheme(scheme_name: &str, to_hash: ContentToHash) -> Result<String> {
+	let pwd_hashed = get_scheme(scheme_name)?.hash(&to_hash)?;
 
 	Ok(format!("#{scheme_name}#{pwd_hashed}"))
 }
 
 fn validate_for_scheme(
 	scheme_name: &str,
-	to_hash: &ContentToHash,
-	pwd_ref: &str,
+	to_hash: ContentToHash,
+	pwd_ref: String,
 ) -> Result<()> {
-	get_scheme(scheme_name)?.validate(to_hash, pwd_ref)?;
+	get_scheme(scheme_name)?.validate(&to_hash, &pwd_ref)?;
 	Ok(())
 }
 
@@ -94,8 +131,8 @@ mod tests {
 	use super::*;
 	use anyhow::Result;
 
-	#[test]
-	fn test_multi_scheme_ok() -> Result<()> {
+	#[tokio::test]
+	async fn test_multi_scheme_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let fx_salt = Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453")?;
 		let fx_to_hash = ContentToHash {
@@ -104,8 +141,8 @@ mod tests {
 		};
 
 		// -- Exec
-		let pwd_hashed = hash_for_scheme("01", &fx_to_hash)?;
-		let pwd_validate = validate_pwd(&fx_to_hash, &pwd_hashed)?;
+		let pwd_hashed = hash_for_scheme("01", fx_to_hash.clone())?;
+		let pwd_validate = validate_pwd(fx_to_hash.clone(), pwd_hashed).await?;
 
 		// -- Check
 		assert!(
