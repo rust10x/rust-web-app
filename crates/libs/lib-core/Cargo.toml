@@ -26,7 +26,6 @@ sea-query-binder = { version = "0.5", features = ["sqlx-postgres", "with-uuid", 
 modql = {version = "0.3.4", features = ["with-sea-query"]}
 # -- Tracing
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # -- Others
 uuid = {version = "1", features = ["v4","fast-rng",]}
 time = {version = "0.3", features = ["formatting", "parsing", "serde"]}
@@ -36,5 +35,4 @@ derive_more = {version = "1.0.0-beta", features = ["from"] }
 
 [dev-dependencies]
 anyhow = "1"
-httpc-test = "0.1.1"
 serial_test = "2"
