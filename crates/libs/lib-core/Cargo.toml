@@ -15,7 +15,6 @@ lib-utils = { path = "../../libs/lib-utils"}
 lib-auth = { path = "../../libs/lib-auth"}
 # -- Async
 tokio = { version = "1", features = ["full"] }
-async-trait = "0.1"
 # -- Json
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -31,8 +30,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # -- Others
 uuid = {version = "1", features = ["v4","fast-rng",]}
 time = {version = "0.3", features = ["formatting", "parsing", "serde"]}
-strum_macros = "0.25"
-enum_dispatch = "0.3"
 derive_more = {version = "1.0.0-beta", features = ["from"] }
 
 
