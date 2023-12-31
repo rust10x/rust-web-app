@@ -30,6 +30,9 @@ pub enum TimestampIden {
 
 pub trait DbBmc {
 	const TABLE: &'static str;
+	/// Specifies that the table for this Bmc has timestamps (cid, ctime, mid, mtime) columns.
+	/// This will allow the code to update those as needed.
+	const TIMESTAMPED: bool;
 
 	fn table_ref() -> TableRef {
 		TableRef::Table(SIden(Self::TABLE).into_iden())
@@ -74,7 +77,9 @@ where
 
 	// -- Extract fields (name / sea-query value expression)
 	let mut fields = data.not_none_fields();
-	add_timestamps_for_create(&mut fields, ctx.user_id());
+	if MC::TIMESTAMPED {
+		add_timestamps_for_create(&mut fields, ctx.user_id());
+	}
 	let (columns, sea_values) = fields.for_sea_insert();
 
 	// -- Build query
@@ -172,7 +177,9 @@ where
 	let db = mm.db();
 
 	let mut fields = data.not_none_fields();
-	add_timestamps_for_update(&mut fields, ctx.user_id());
+	if MC::TIMESTAMPED {
+		add_timestamps_for_update(&mut fields, ctx.user_id());
+	}
 	let fields = fields.for_sea_update();
 
 	// -- Build query

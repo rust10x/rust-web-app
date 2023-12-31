@@ -75,6 +75,7 @@ pub struct ProjectBmc;
 
 impl DbBmc for ProjectBmc {
 	const TABLE: &'static str = "project";
+	const TIMESTAMPED: bool = true;
 }
 
 impl ProjectBmc {

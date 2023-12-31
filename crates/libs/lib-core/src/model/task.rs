@@ -66,6 +66,7 @@ pub struct TaskBmc;
 
 impl DbBmc for TaskBmc {
 	const TABLE: &'static str = "task";
+	const TIMESTAMPED: bool = true;
 }
 
 impl TaskBmc {

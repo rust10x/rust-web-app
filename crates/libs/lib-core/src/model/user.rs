@@ -72,6 +72,7 @@ pub struct UserBmc;
 
 impl DbBmc for UserBmc {
 	const TABLE: &'static str = "user";
+	const TIMESTAMPED: bool = true;
 }
 
 impl UserBmc {
@@ -126,7 +127,9 @@ impl UserBmc {
 
 		// -- Prep the data
 		let mut fields = Fields::new(vec![Field::new(UserIden::Pwd, pwd.into())]);
-		add_timestamps_for_update(&mut fields, ctx.user_id());
+		if Self::TIMESTAMPED {
+			add_timestamps_for_update(&mut fields, ctx.user_id());
+		}
 
 		// -- Build query
 		let fields = fields.for_sea_update();
