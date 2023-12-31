@@ -29,9 +29,6 @@ uuid = {version = "1", features = ["v4","fast-rng",]}
 strum_macros = "0.25"
 derive_more = {version = "1.0.0-beta", features = ["from"] }
 
-
-
 [dev-dependencies]
-anyhow = "1"
 httpc-test = "0.1"
 time = "0.3"

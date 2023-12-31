@@ -152,9 +152,11 @@ impl UserBmc {
 // region:    --- Tests
 #[cfg(test)]
 mod tests {
+	pub type Result<T> = core::result::Result<T, Error>;
+	pub type Error = Box<dyn std::error::Error>; // For tests.
+
 	use super::*;
 	use crate::_dev_utils;
-	use anyhow::{Context, Result};
 	use serial_test::serial;
 
 	#[serial]
@@ -168,7 +170,7 @@ mod tests {
 		// -- Exec
 		let user: User = UserBmc::first_by_username(&ctx, &mm, fx_username)
 			.await?
-			.context("Should have user 'demo1'")?;
+			.ok_or("Should have user 'demo1'")?;
 
 		// -- Check
 		assert_eq!(user.username, fx_username);

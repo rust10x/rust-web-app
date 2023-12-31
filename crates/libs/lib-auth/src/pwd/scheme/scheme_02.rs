@@ -58,9 +58,11 @@ fn get_argon2() -> &'static Argon2<'static> {
 // region:    --- Tests
 #[cfg(test)]
 mod tests {
+	pub type Result<T> = core::result::Result<T, Error>;
+	pub type Error = Box<dyn std::error::Error>; // For tests.
+
 	use super::*;
 	use crate::pwd::ContentToHash;
-	use anyhow::Result;
 	use uuid::Uuid;
 
 	#[test]

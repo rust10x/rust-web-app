@@ -155,8 +155,11 @@ fn _token_sign_into_b64u(
 // region:    --- Tests
 #[cfg(test)]
 mod tests {
+	pub type Result<T> = core::result::Result<T, Error>;
+	pub type Error = Box<dyn std::error::Error>; // For early dev & tests.
+
 	use super::*;
-	use anyhow::Result;
+	use crate::token;
 	use std::thread;
 	use std::time::Duration;
 
@@ -235,7 +238,7 @@ mod tests {
 
 		// -- Check
 		assert!(
-			matches!(res, Err(Error::Expired)),
+			matches!(res, Err(token::Error::Expired)),
 			"Should have matched `Err(Error::Expired)` but was `{res:?}`"
 		);
 

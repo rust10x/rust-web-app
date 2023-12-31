@@ -47,9 +47,11 @@ fn hash(key: &[u8], to_hash: &ContentToHash) -> Result<String> {
 // region:    --- Tests
 #[cfg(test)]
 mod tests {
+	pub type Result<T> = core::result::Result<T, Error>;
+	pub type Error = Box<dyn std::error::Error>; // For early tests.
+
 	use super::*;
 	use crate::auth_config;
-	use anyhow::Result;
 	use uuid::Uuid;
 
 	#[test]

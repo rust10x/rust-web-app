@@ -32,7 +32,5 @@ time = {version = "0.3", features = ["formatting", "parsing", "serde"]}
 derive_more = {version = "1.0.0-beta", features = ["from"] }
 
 
-
 [dev-dependencies]
-anyhow = "1"
 serial_test = "2"

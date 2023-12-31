@@ -1,6 +1,8 @@
 #![allow(unused)] // For example code.
 
-use anyhow::Result;
+pub type Result<T> = core::result::Result<T, Error>;
+pub type Error = Box<dyn std::error::Error>; // For examples.
+
 use serde_json::json;
 
 #[tokio::main]

@@ -108,11 +108,12 @@ impl TaskBmc {
 // region:    --- Tests
 #[cfg(test)]
 mod tests {
+	pub type Result<T> = core::result::Result<T, Error>;
+	pub type Error = Box<dyn std::error::Error>; // For tests.
+
 	use super::*;
-	use crate::_dev_utils;
 	use crate::model::project::ProjectBmc;
-	use crate::model::Error;
-	use anyhow::Result;
+	use crate::{_dev_utils, model};
 	use lib_utils::time::{format_time, now_utc};
 	use modql::filter::OpValString;
 	use serde_json::json;
@@ -163,7 +164,7 @@ mod tests {
 		assert!(
 			matches!(
 				res,
-				Err(Error::EntityNotFound {
+				Err(model::Error::EntityNotFound {
 					entity: "task",
 					id: 100
 				})
@@ -386,7 +387,7 @@ mod tests {
 		assert!(
 			matches!(
 				res,
-				Err(Error::EntityNotFound {
+				Err(model::Error::EntityNotFound {
 					entity: "task",
 					id: 100
 				})
