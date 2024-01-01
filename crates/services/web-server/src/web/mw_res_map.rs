@@ -1,6 +1,6 @@
 use crate::log::log_request;
 use crate::web::mw_auth::CtxW;
-use crate::web::mw_stamp::ReqStamp;
+use crate::web::mw_req_stamp::ReqStamp;
 use crate::web::routes_rpc::RpcInfo;
 use crate::web::{self};
 use axum::http::{Method, Uri};
@@ -54,8 +54,10 @@ pub async fn mw_reponse_map(
 				// Build the new response from the client_error_body
 				(*status_code, Json(client_error_body)).into_response()
 			});
+
 	// -- Build and log the server log line.
 	let client_error = client_status_error.unzip().1;
+
 	// TODO: Need to hander if log_request fail (but should not fail request)
 	let _ = log_request(
 		req_method,

@@ -63,7 +63,6 @@ mod tests {
 			content: "hello world".to_string(),
 			salt: fx_salt,
 		};
-		// TODO: Need to fix fx_key, and precompute fx_res.
 		let fx_res = "qO9A90161DoewhNXFwVcnAaljRIVnajvd5zsVDrySCwxpoLwVCACzaz-8Ev2ZpI8RackUTLBVqFI6H5oMe-OIg";
 
 		// -- Exec

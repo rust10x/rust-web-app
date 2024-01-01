@@ -8,9 +8,9 @@
 //! - The `ModelManager` holds the internal states/resources
 //!   needed by ModelControllers to access data.
 //!   (e.g., db_pool, S3 client, redis client).
-//! - Model Controllers (e.g., `TaskBmc`, `ProjectBmc`) implement
+//! - Model Controllers (e.g., `ConvBmc`, `AgentBmc`) implement
 //!   CRUD and other data access methods on a given "entity"
-//!   (e.g., `Task`, `Project`).
+//!   (e.g., `Conv`, `Agent`).
 //!   (`Bmc` is short for Backend Model Controller).
 //! - In frameworks like Axum, Tauri, `ModelManager` are typically used as App State.
 //! - ModelManager are designed to be passed as an argument
@@ -19,36 +19,50 @@
 
 // region:    --- Modules
 
+mod acs;
 mod base;
 mod error;
-pub mod modql_utils;
-pub mod project;
 mod store;
-pub mod task;
+
+pub mod agent;
+pub mod conv;
+pub mod conv_msg;
+pub mod conv_user;
+pub mod modql_utils;
 pub mod user;
 
 pub use self::error::{Error, Result};
 
-use crate::model::store::{new_db_pool, Db};
+use crate::model::store::dbx::Dbx;
+use crate::model::store::new_db_pool;
 
 // endregion: --- Modules
 
+// region:    --- ModelManager
+
 #[derive(Clone)]
 pub struct ModelManager {
-	db: Db,
+	dbx: Dbx,
 }
 
 impl ModelManager {
 	/// Constructor
 	pub async fn new() -> Result<Self> {
-		let db = new_db_pool().await?;
-
-		Ok(ModelManager { db })
+		let db_pool = new_db_pool()
+			.await
+			.map_err(|ex| Error::CantCreateModelManagerProvider(ex.to_string()))?;
+		let dbx = Dbx::new(db_pool, false)?;
+		Ok(ModelManager { dbx })
 	}
 
-	/// Returns the sqlx db pool reference.
-	/// (Only for the model layer)
-	pub(in crate::model) fn db(&self) -> &Db {
-		&self.db
+	pub fn new_with_txn(&self) -> Result<ModelManager> {
+		let dbx = Dbx::new(self.dbx.db().clone(), true)?;
+		Ok(ModelManager { dbx })
+	}
+
+	pub fn dbx(&self) -> &Dbx {
+		&self.dbx
 	}
 }
+
+// endregion: --- ModelManager

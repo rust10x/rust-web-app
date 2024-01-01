@@ -5,19 +5,14 @@ use axum::routing::post;
 use axum::{Json, Router};
 use lib_core::model::ModelManager;
 use lib_rpc::router::RpcRouter;
-use lib_rpc::{project_rpc, task_rpc, RpcRequest, RpcResources};
+use lib_rpc::{all_rpc_router, RpcRequest, RpcResources};
 use serde_json::{json, Value};
 use std::sync::Arc;
 
-/// The RpcState is the Axum State that will
-/// be used for the Axum RPC router handler.
-///
-/// Note: Not to be confused with the RpcResources that are for the lib-rpc
-///      layer for the RpcRouter System. The RpcResources typically contains some elements
-///      from the RpcState
 #[derive(Clone)]
-pub struct RpcState {
-	pub mm: ModelManager,
+pub struct RpcAxumHandlerState {
+	rpc_router: Arc<RpcRouter>,
+	mm: ModelManager,
 }
 
 #[derive(Debug)]
@@ -27,23 +22,26 @@ pub struct RpcInfo {
 }
 
 // Axum router for '/api/rpc'
-pub fn routes(rpc_state: RpcState) -> Router {
+pub fn routes(mm: ModelManager) -> Router {
 	// Build the combined RpcRouter.
-	let rpc_router = RpcRouter::new()
-		.extend(task_rpc::rpc_router())
-		.extend(project_rpc::rpc_router());
+	let rpc_router = all_rpc_router();
+	let rpc_router = Arc::new(rpc_router);
+
+	let axum_state = RpcAxumHandlerState { rpc_router, mm };
 
 	// Build the Axum Router for '/rpc'
 	Router::new()
 		.route("/rpc", post(rpc_axum_handler))
-		.with_state((rpc_state, Arc::new(rpc_router)))
+		.with_state(axum_state)
 }
 
 async fn rpc_axum_handler(
-	State((rpc_state, rpc_router)): State<(RpcState, Arc<RpcRouter>)>,
+	State(axum_state): State<RpcAxumHandlerState>,
 	ctx: CtxW,
 	Json(rpc_req): Json<RpcRequest>,
 ) -> Response {
+	let RpcAxumHandlerState { rpc_router, mm } = axum_state;
+
 	let ctx = ctx.0;
 
 	// -- Create the RPC Info
@@ -54,10 +52,7 @@ async fn rpc_axum_handler(
 	};
 	let rpc_method = &rpc_info.method;
 	let rpc_params = rpc_req.params;
-	let rpc_resources = RpcResources {
-		ctx: Some(ctx),
-		mm: rpc_state.mm,
-	};
+	let rpc_resources = RpcResources { ctx: Some(ctx), mm };
 
 	// -- Exec Rpc Route
 	let res = rpc_router.call(rpc_method, rpc_resources, rpc_params).await;

@@ -18,8 +18,9 @@ futures = "0.3"
 # -- Json
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde_with = "3"
+serde_with = { workspace = true }
 # -- Data
-modql = {version = "0.3.4", features = ["with-sea-query"]}
+modql = { workspace = true }
 # -- Others
-derive_more = {version = "1.0.0-beta", features = ["from"] }
+paste = "1"
+derive_more = { workspace = true }

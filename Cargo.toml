@@ -17,3 +17,12 @@ members = [
     # -- Tools
     "crates/tools/gen-key",    
 ]
+
+# NOTE: Only the crates that are utilized in two or more sub-crates and benefit from global management
+#       are handled in workspace.dependencies. Other strategies may also be valid.
+[workspace.dependencies]
+# -- Serde
+serde_with = {version = "3", features = ["time_0_3"] }
+# -- Data
+modql = { version = "0.3.7", features = ["with-sea-query"]}
+derive_more = {version = "1.0.0-beta", features = ["from", "display"] }

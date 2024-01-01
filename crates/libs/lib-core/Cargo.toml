@@ -18,19 +18,18 @@ tokio = { version = "1", features = ["full"] }
 # -- Json
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde_with = {version = "3", features = ["time_0_3"]}
+serde_with = { workspace = true }
 # -- Data
-sqlx = { version = "0.7", features = [ "runtime-tokio", "postgres", "uuid" ] }
+sqlx = { version = "0.7", features = [ "macros", "runtime-tokio", "postgres", "uuid" ] }
 sea-query = "0.30"
 sea-query-binder = { version = "0.5", features = ["sqlx-postgres", "with-uuid", "with-time" ] }
-modql = {version = "0.3.4", features = ["with-sea-query"]}
+modql = { workspace = true }
 # -- Tracing
 tracing = "0.1"
 # -- Others
 uuid = {version = "1", features = ["v4","fast-rng",]}
 time = {version = "0.3", features = ["formatting", "parsing", "serde"]}
-derive_more = {version = "1.0.0-beta", features = ["from"] }
-
+derive_more = { workspace = true }
 
 [dev-dependencies]
 serial_test = "2"

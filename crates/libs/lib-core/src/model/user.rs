@@ -1,9 +1,13 @@
 use crate::ctx::Ctx;
-use crate::model::base::{self, add_timestamps_for_update, DbBmc};
+use crate::model::base::{self, prep_fields_for_update, DbBmc};
+use crate::model::modql_utils::time_to_sea_value;
 use crate::model::ModelManager;
-use crate::model::Result;
+use crate::model::{Error, Result};
 use lib_auth::pwd::{self, ContentToHash};
 use modql::field::{Field, Fields, HasFields};
+use modql::filter::{
+	FilterNodes, ListOptions, OpValsInt64, OpValsString, OpValsValue,
+};
 use sea_query::{Expr, Iden, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use serde::{Deserialize, Serialize};
@@ -12,10 +16,23 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 // region:    --- User Types
+#[derive(Clone, Debug, sqlx::Type, derive_more::Display, Deserialize, Serialize)]
+#[sqlx(type_name = "user_typ")]
+pub enum UserTyp {
+	Sys,
+	User,
+}
+impl From<UserTyp> for sea_query::Value {
+	fn from(val: UserTyp) -> Self {
+		val.to_string().into()
+	}
+}
+
 #[derive(Clone, Fields, FromRow, Debug, Serialize)]
 pub struct User {
 	pub id: i64,
 	pub username: String,
+	pub typ: UserTyp,
 }
 
 #[derive(Deserialize)]
@@ -65,17 +82,76 @@ enum UserIden {
 	Username,
 	Pwd,
 }
+
+#[derive(FilterNodes, Deserialize, Default, Debug)]
+pub struct UserFilter {
+	pub id: Option<OpValsInt64>,
+
+	pub username: Option<OpValsString>,
+
+	pub cid: Option<OpValsInt64>,
+	#[modql(to_sea_value_fn = "time_to_sea_value")]
+	pub ctime: Option<OpValsValue>,
+	pub mid: Option<OpValsInt64>,
+	#[modql(to_sea_value_fn = "time_to_sea_value")]
+	pub mtime: Option<OpValsValue>,
+}
+
 // endregion: --- User Types
 
 // region:    --- UserBmc
+
 pub struct UserBmc;
 
 impl DbBmc for UserBmc {
 	const TABLE: &'static str = "user";
-	const TIMESTAMPED: bool = true;
 }
 
 impl UserBmc {
+	pub async fn create(
+		ctx: &Ctx,
+		mm: &ModelManager,
+		user_c: UserForCreate,
+	) -> Result<i64> {
+		let UserForCreate {
+			username,
+			pwd_clear,
+		} = user_c;
+
+		// -- Create the user row
+		let user_fi = UserForInsert {
+			username: username.to_string(),
+		};
+
+		// Start the transaction
+		let mm = mm.new_with_txn()?;
+
+		mm.dbx().begin_txn().await?;
+
+		let user_id = base::create::<Self, _>(ctx, &mm, user_fi).await.map_err(
+			|model_error| {
+				Error::resolve_unique_violation(
+					model_error,
+					Some(|table: &str, constraint: &str| {
+						if table == "user" && constraint.contains("username") {
+							Some(Error::UserAlreadyExists { username })
+						} else {
+							None // Error::UniqueViolation will be created by resolve_unique_violation
+						}
+					}),
+				)
+			},
+		)?;
+
+		// -- Update the database
+		Self::update_pwd(ctx, &mm, user_id, &pwd_clear).await?;
+
+		// Commit the transaction
+		mm.dbx().commit_txn().await?;
+
+		Ok(user_id)
+	}
+
 	pub async fn get<E>(ctx: &Ctx, mm: &ModelManager, id: i64) -> Result<E>
 	where
 		E: UserBy,
@@ -91,8 +167,6 @@ impl UserBmc {
 	where
 		E: UserBy,
 	{
-		let db = mm.db();
-
 		// -- Build query
 		let mut query = Query::select();
 		query
@@ -102,11 +176,20 @@ impl UserBmc {
 
 		// -- Execute query
 		let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
-		let entity = sqlx::query_as_with::<_, E, _>(&sql, values)
-			.fetch_optional(db)
-			.await?;
+
+		let sqlx_query = sqlx::query_as_with::<_, E, _>(&sql, values);
+		let entity = mm.dbx().fetch_optional(sqlx_query).await?;
 
 		Ok(entity)
+	}
+
+	pub async fn list(
+		ctx: &Ctx,
+		mm: &ModelManager,
+		filter: Option<Vec<UserFilter>>,
+		list_options: Option<ListOptions>,
+	) -> Result<Vec<User>> {
+		base::list::<Self, _, _>(ctx, mm, filter, list_options).await
 	}
 
 	pub async fn update_pwd(
@@ -115,8 +198,6 @@ impl UserBmc {
 		id: i64,
 		pwd_clear: &str,
 	) -> Result<()> {
-		let db = mm.db();
-
 		// -- Prep password
 		let user: UserForLogin = Self::get(ctx, mm, id).await?;
 		let pwd = pwd::hash_pwd(ContentToHash {
@@ -127,9 +208,7 @@ impl UserBmc {
 
 		// -- Prep the data
 		let mut fields = Fields::new(vec![Field::new(UserIden::Pwd, pwd.into())]);
-		if Self::TIMESTAMPED {
-			add_timestamps_for_update(&mut fields, ctx.user_id());
-		}
+		prep_fields_for_update::<Self>(&mut fields, ctx.user_id());
 
 		// -- Build query
 		let fields = fields.for_sea_update();
@@ -141,18 +220,28 @@ impl UserBmc {
 
 		// -- Exec query
 		let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
-		let _count = sqlx::query_with(&sql, values)
-			.execute(db)
-			.await?
-			.rows_affected();
+		let sqlx_query = sqlx::query_with(&sql, values);
+		let _count = mm.dbx().execute(sqlx_query).await?;
 
 		Ok(())
+	}
+
+	/// TODO: For User, deletion will require a soft-delete approach:
+	///       - Set `deleted: true`.
+	///       - Change `username` to "DELETED-_user_id_".
+	///       - Clear any other UUIDs or PII (Personally Identifiable Information).
+	///       - The automatically set `mid`/`mtime` will record who performed the deletion.
+	///       - It's likely necessary to record this action in a `um_change_log` (a user management change audit table).
+	///       - Remove or clean up any user-specific assets (messages, etc.).
+	pub async fn delete(ctx: &Ctx, mm: &ModelManager, id: i64) -> Result<()> {
+		base::delete::<Self>(ctx, mm, id).await
 	}
 }
 
 // endregion: --- UserBmc
 
 // region:    --- Tests
+
 #[cfg(test)]
 mod tests {
 	pub type Result<T> = core::result::Result<T, Error>;
@@ -161,6 +250,36 @@ mod tests {
 	use super::*;
 	use crate::_dev_utils;
 	use serial_test::serial;
+
+	#[serial]
+	#[tokio::test]
+	async fn test_create_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let mm = _dev_utils::init_test().await;
+		let ctx = Ctx::root_ctx();
+		let fx_username = "test_create_ok-user-01";
+		let fx_pwd_clear = "test_create_ok pwd 01";
+
+		// -- Exec
+		let user_id = UserBmc::create(
+			&ctx,
+			&mm,
+			UserForCreate {
+				username: fx_username.to_string(),
+				pwd_clear: fx_pwd_clear.to_string(),
+			},
+		)
+		.await?;
+
+		// -- Check
+		let user: UserForLogin = UserBmc::get(&ctx, &mm, user_id).await?;
+		assert_eq!(user.username, fx_username);
+
+		// -- Clean
+		UserBmc::delete(&ctx, &mm, user_id).await?;
+
+		Ok(())
+	}
 
 	#[serial]
 	#[tokio::test]
@@ -181,4 +300,5 @@ mod tests {
 		Ok(())
 	}
 }
+
 // endregion: --- Tests

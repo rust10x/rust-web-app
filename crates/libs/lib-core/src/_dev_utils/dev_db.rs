@@ -86,7 +86,11 @@ async fn pexec(db: &Db, file: &Path) -> Result<(), sqlx::Error> {
 	let sqls: Vec<&str> = content.split(';').collect();
 
 	for sql in sqls {
-		sqlx::query(sql).execute(db).await?;
+		sqlx::query(sql).execute(db).await.map_err(|e| {
+			println!("pexec error while running:\n{sql}");
+			println!("cause:\n{e}");
+			e
+		})?;
 	}
 
 	Ok(())

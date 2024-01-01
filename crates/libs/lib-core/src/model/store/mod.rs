@@ -1,8 +1,6 @@
 // region:    --- Modules
 
-mod error;
-
-pub use self::error::{Error, Result};
+pub(in crate::model) mod dbx;
 
 use crate::core_config;
 use sqlx::postgres::PgPoolOptions;
@@ -12,7 +10,7 @@ use sqlx::{Pool, Postgres};
 
 pub type Db = Pool<Postgres>;
 
-pub async fn new_db_pool() -> Result<Db> {
+pub async fn new_db_pool() -> sqlx::Result<Db> {
 	// * See NOTE 1) below
 	let max_connections = if cfg!(test) { 1 } else { 5 };
 
@@ -20,7 +18,6 @@ pub async fn new_db_pool() -> Result<Db> {
 		.max_connections(max_connections)
 		.connect(&core_config().DB_URL)
 		.await
-		.map_err(|ex| Error::FailToCreatePool(ex.to_string()))
 }
 
 // NOTE 1) This is not an ideal situation; however, with sqlx 0.7.1, when executing `cargo test`, some tests that use sqlx fail at a

@@ -27,15 +27,20 @@ pub async fn mw_ctx_require(
 	Ok(next.run(req).await)
 }
 
-pub async fn mw_ctx_resolve(
-	mm: State<ModelManager>,
+// IMPORTANT: This resolver must never fail, but rather capture the potential Auth error and put in in the
+//            request extension as CtxExtResult.
+//            This way it won't prevent downstream middleware to be executed, and will still capture the error
+//            for the appropriate middleware (.e.g., mw_ctx_require which forces successful auth) or handler
+//            to get the appropriate information.
+pub async fn mw_ctx_resolver(
+	State(mm): State<ModelManager>,
 	cookies: Cookies,
 	mut req: Request<Body>,
 	next: Next,
-) -> Result<Response> {
+) -> Response {
 	debug!("{:<12} - mw_ctx_resolve", "MIDDLEWARE");
 
-	let ctx_ext_result = _ctx_resolve(mm, &cookies).await;
+	let ctx_ext_result = ctx_resolve(mm, &cookies).await;
 
 	if ctx_ext_result.is_err()
 		&& !matches!(ctx_ext_result, Err(CtxExtError::TokenNotInCookie))
@@ -47,10 +52,10 @@ pub async fn mw_ctx_resolve(
 	// (for Ctx extractor).
 	req.extensions_mut().insert(ctx_ext_result);
 
-	Ok(next.run(req).await)
+	next.run(req).await
 }
 
-async fn _ctx_resolve(mm: State<ModelManager>, cookies: &Cookies) -> CtxExtResult {
+async fn ctx_resolve(mm: ModelManager, cookies: &Cookies) -> CtxExtResult {
 	// -- Get Token String
 	let token = cookies
 		.get(AUTH_TOKEN)
