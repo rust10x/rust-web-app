@@ -39,6 +39,7 @@ pub use rpc_handler_wrapper::{RpcHandlerWrapper, RpcHandlerWrapperTrait};
 
 use crate::RpcResources;
 use crate::{Error, Result};
+use core::fmt;
 use futures::Future;
 use serde::Deserialize;
 use serde_json::Value;
@@ -53,6 +54,14 @@ pub struct RpcRequest {
 	pub id: Option<Value>,
 	pub method: String,
 	pub params: Option<Value>,
+}
+
+impl fmt::Debug for RpcRouter {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		f.debug_struct("RpcRouter")
+			.field("route_by_name", &self.route_by_name.keys())
+			.finish()
+	}
 }
 
 pub type PinFutureValue = Pin<Box<dyn Future<Output = Result<Value>> + Send>>;
@@ -145,10 +154,10 @@ impl RpcRouter {
 /// Is equivalent to:
 /// ```
 /// RpcRouter::new()
-///     .add_dyn("create_project", create_project.into_box())
-///     .add_dyn("list_projects", list_projects.into_box())
-///     .add_dyn("update_project", update_project.into_box())
-///     .add_dyn("delete_project", delete_project.into_box())
+///     .add_dyn("create_project", create_project.into_dyn())
+///     .add_dyn("list_projects", list_projects.into_dyn())
+///     .add_dyn("update_project", update_project.into_dyn())
+///     .add_dyn("delete_project", delete_project.into_dyn())
 /// ```
 #[macro_export]
 macro_rules! rpc_router {
