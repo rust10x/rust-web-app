@@ -70,6 +70,43 @@ where
 	Ok(entity)
 }
 
+pub async fn first<MC, E, F>(
+	ctx: &Ctx,
+	mm: &ModelManager,
+	filter: Option<F>,
+	list_options: Option<ListOptions>,
+) -> Result<Option<E>>
+where
+	MC: DbBmc,
+	F: Into<FilterGroups>,
+	E: for<'r> FromRow<'r, PgRow> + Unpin + Send,
+	E: HasFields,
+{
+	let list_options = match list_options {
+		Some(mut list_options) => {
+			// Reset the offset/limit
+			list_options.offset = None;
+			list_options.limit = Some(1);
+
+			// Don't change order_bys if not empty,
+			// otherwise, set it to id (creation asc order)
+			list_options.order_bys =
+				list_options.order_bys.or_else(|| Some("id".into()));
+
+			list_options
+		}
+		None => ListOptions {
+			limit: Some(1),
+			offset: None,
+			order_bys: Some("id".into()), // default id asc
+		},
+	};
+
+	list::<MC, E, F>(ctx, mm, filter, Some(list_options))
+		.await
+		.map(|item| item.into_iter().next())
+}
+
 pub async fn list<MC, E, F>(
 	_ctx: &Ctx,
 	mm: &ModelManager,

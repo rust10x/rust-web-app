@@ -27,6 +27,15 @@ macro_rules! generate_common_bmc_fns {
 				base::get::<Self, _>(ctx, mm, id).await
 			}
 
+			pub async fn first(
+				ctx: &Ctx,
+				mm: &ModelManager,
+				filter: Option<Vec<$filter>>,
+				list_options: Option<ListOptions>,
+			) -> Result<Option<$entity>> {
+				base::first::<Self, _, _>(ctx, mm, filter, list_options).await
+			}
+
 			pub async fn list(
 				ctx: &Ctx,
 				mm: &ModelManager,

@@ -180,6 +180,36 @@ mod tests {
 
 	#[serial]
 	#[tokio::test]
+	async fn test_first_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let mm = _dev_utils::init_test().await;
+		let ctx = Ctx::root_ctx();
+
+		let fx_agent_names = &["test_first_ok agent 01", "test_first_ok agent 02"];
+		seed_agents(&ctx, &mm, fx_agent_names).await?;
+
+		// -- Exec
+		let agent_filter: AgentFilter = serde_json::from_value(json!(
+			{
+				"name": {"$startsWith": "test_first_ok agent"}
+			}
+		))?;
+		let agent =
+			AgentBmc::first(&ctx, &mm, Some(vec![agent_filter]), None).await?;
+
+		// -- Check
+		let agent = agent.ok_or("No Agent Returned (should have returned one")?;
+		assert_eq!(agent.name, fx_agent_names[0]);
+
+		// -- Clean
+		let count = clean_agents(&ctx, &mm, "test_first_ok agent").await?;
+		assert_eq!(count, 2, "Should have cleaned 2 agents");
+
+		Ok(())
+	}
+
+	#[serial]
+	#[tokio::test]
 	async fn test_list_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let mm = _dev_utils::init_test().await;
