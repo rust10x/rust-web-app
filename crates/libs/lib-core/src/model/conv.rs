@@ -147,7 +147,7 @@ generate_common_bmc_fns!(
 	Entity: Conv,
 	ForCreate: ConvForCreate,
 	ForUpdate: ConvForUpdate,
-	Filter: ConvFilter
+	Filter: ConvFilter,
 );
 
 // Additional ConvBmc methods to manage the `ConvMsg` constructs.

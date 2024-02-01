@@ -81,7 +81,7 @@ generate_common_bmc_fns!(
 	Entity: Agent,
 	ForCreate: AgentForCreate,
 	ForUpdate: AgentForUpdate,
-	Filter: AgentFilter
+	Filter: AgentFilter,
 );
 
 // endregion: --- AgentBmc
