@@ -5,7 +5,7 @@ use crate::model::base::{
 };
 use crate::model::ModelManager;
 use crate::model::{Error, Result};
-use modql::field::HasFields;
+use modql::field::HasSeaFields;
 use modql::filter::{FilterGroups, ListOptions};
 use sea_query::{Condition, Expr, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
@@ -15,12 +15,12 @@ use sqlx::FromRow;
 pub async fn create<MC, E>(ctx: &Ctx, mm: &ModelManager, data: E) -> Result<i64>
 where
 	MC: DbBmc,
-	E: HasFields,
+	E: HasSeaFields,
 {
 	let user_id = ctx.user_id();
 
 	// -- Extract fields (name / sea-query value expression)
-	let mut fields = data.not_none_fields();
+	let mut fields = data.not_none_sea_fields();
 	prep_fields_for_create::<MC>(&mut fields, user_id);
 
 	// -- Build query
@@ -46,13 +46,13 @@ pub async fn get<MC, E>(_ctx: &Ctx, mm: &ModelManager, id: i64) -> Result<E>
 where
 	MC: DbBmc,
 	E: for<'r> FromRow<'r, PgRow> + Unpin + Send,
-	E: HasFields,
+	E: HasSeaFields,
 {
 	// -- Build query
 	let mut query = Query::select();
 	query
 		.from(MC::table_ref())
-		.columns(E::field_column_refs())
+		.columns(E::sea_column_refs())
 		.and_where(Expr::col(CommonIden::Id).eq(id));
 
 	// -- Exec query
@@ -80,7 +80,7 @@ where
 	MC: DbBmc,
 	F: Into<FilterGroups>,
 	E: for<'r> FromRow<'r, PgRow> + Unpin + Send,
-	E: HasFields,
+	E: HasSeaFields,
 {
 	let list_options = match list_options {
 		Some(mut list_options) => {
@@ -117,11 +117,11 @@ where
 	MC: DbBmc,
 	F: Into<FilterGroups>,
 	E: for<'r> FromRow<'r, PgRow> + Unpin + Send,
-	E: HasFields,
+	E: HasSeaFields,
 {
 	// -- Build the query
 	let mut query = Query::select();
-	query.from(MC::table_ref()).columns(E::field_column_refs());
+	query.from(MC::table_ref()).columns(E::sea_column_refs());
 
 	// condition from filter
 	if let Some(filter) = filter {
@@ -150,10 +150,10 @@ pub async fn update<MC, E>(
 ) -> Result<()>
 where
 	MC: DbBmc,
-	E: HasFields,
+	E: HasSeaFields,
 {
 	// -- Prep Fields
-	let mut fields = data.not_none_fields();
+	let mut fields = data.not_none_sea_fields();
 	prep_fields_for_update::<MC>(&mut fields, ctx.user_id());
 
 	// -- Build query

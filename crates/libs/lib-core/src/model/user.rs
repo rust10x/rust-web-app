@@ -4,7 +4,7 @@ use crate::model::modql_utils::time_to_sea_value;
 use crate::model::ModelManager;
 use crate::model::{Error, Result};
 use lib_auth::pwd::{self, ContentToHash};
-use modql::field::{Field, Fields, HasFields};
+use modql::field::{Fields, HasSeaFields, SeaField, SeaFields};
 use modql::filter::{
 	FilterNodes, ListOptions, OpValsInt64, OpValsString, OpValsValue,
 };
@@ -67,7 +67,7 @@ pub struct UserForAuth {
 }
 
 /// Marker trait
-pub trait UserBy: HasFields + for<'r> FromRow<'r, PgRow> + Unpin + Send {}
+pub trait UserBy: HasSeaFields + for<'r> FromRow<'r, PgRow> + Unpin + Send {}
 
 impl UserBy for User {}
 impl UserBy for UserForLogin {}
@@ -171,7 +171,7 @@ impl UserBmc {
 		let mut query = Query::select();
 		query
 			.from(Self::table_ref())
-			.columns(E::field_idens())
+			.columns(E::sea_idens())
 			.and_where(Expr::col(UserIden::Username).eq(username));
 
 		// -- Execute query
@@ -207,7 +207,8 @@ impl UserBmc {
 		.await?;
 
 		// -- Prep the data
-		let mut fields = Fields::new(vec![Field::new(UserIden::Pwd, pwd.into())]);
+		let mut fields =
+			SeaFields::new(vec![SeaField::new(UserIden::Pwd, pwd.into())]);
 		prep_fields_for_update::<Self>(&mut fields, ctx.user_id());
 
 		// -- Build query

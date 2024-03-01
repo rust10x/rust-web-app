@@ -24,5 +24,6 @@ members = [
 # -- Serde
 serde_with = {version = "3", features = ["time_0_3"] }
 # -- Data
-modql = { version = "0.3.7", features = ["with-sea-query"]}
+modql = { version = "0.4.0-rc", features = ["with-sea-query"]}
+# -- Others
 derive_more = {version = "1.0.0-beta", features = ["from", "display"] }
