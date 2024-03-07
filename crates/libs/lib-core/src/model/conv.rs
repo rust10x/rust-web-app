@@ -8,7 +8,7 @@ use crate::model::modql_utils::time_to_sea_value;
 use crate::model::ModelManager;
 use crate::model::Result;
 use lib_utils::time::Rfc3339;
-use modql::field::Fields;
+use modql::field::{Fields, SeaFieldValue};
 use modql::filter::{
 	FilterNodes, ListOptions, OpValsInt64, OpValsString, OpValsValue,
 };
@@ -35,14 +35,16 @@ pub enum ConvKind {
 	MultiUsers,
 }
 
-/// Note: Required for a modql::field::Fields
+/// Note: Manual implementation.
+///       Required for a modql::field::Fields
 impl From<ConvKind> for sea_query::Value {
 	fn from(val: ConvKind) -> Self {
 		val.to_string().into()
 	}
 }
 
-/// Note: This is required for sea::query in case of None.
+/// Note: Manual implementation.
+///       This is required for sea::query in case of None.
 ///       However, in this codebase, we utilize the modql not_none_field,
 ///       so this will be disregarded anyway.
 ///       Nonetheless, it's still necessary for compilation.
@@ -52,17 +54,24 @@ impl Nullable for ConvKind {
 	}
 }
 
-#[derive(Debug, Clone, sqlx::Type, derive_more::Display, Deserialize, Serialize)]
+/// Note: Here we derive from modql `SeaFieldValue` which implements
+///       the `From<ConvState> for sea_query::Value` and the
+///       `sea_query::value::Nullable for ConvState`
+///       See the `ConvKind` for the manual implementation.
+///       
+#[derive(
+	Debug,
+	Clone,
+	sqlx::Type,
+	SeaFieldValue,
+	derive_more::Display,
+	Deserialize,
+	Serialize,
+)]
 #[sqlx(type_name = "conv_state")]
 pub enum ConvState {
 	Active,
 	Archived,
-}
-
-impl From<ConvState> for sea_query::Value {
-	fn from(val: ConvState) -> Self {
-		val.to_string().into()
-	}
 }
 
 #[serde_as]
@@ -105,6 +114,8 @@ pub struct ConvForUpdate {
 	pub owner_id: Option<i64>,
 	pub title: Option<String>,
 	pub closed: Option<bool>,
+	#[field(cast_as = "conv_state")]
+	pub state: Option<ConvState>,
 }
 
 #[derive(FilterNodes, Deserialize, Default, Debug)]
