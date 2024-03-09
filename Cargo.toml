@@ -7,9 +7,9 @@ resolver = "2"
 members = [
     # -- Application Libraries
     "crates/libs/lib-utils", # e.g., base64, time.
-    "crates/libs/lib-rpc", # e.g., rpc routing.
-    "crates/libs/lib-auth", # e.g., for pwd, token.
-    "crates/libs/lib-core", # e.g., model, ctx, config.
+    "crates/libs/lib-rpc",   # e.g., app rpc handlers (using rpc-router crate)
+    "crates/libs/lib-auth",  # e.g., for pwd, token.
+    "crates/libs/lib-core",  # e.g., model, ctx, config.
 
     # -- Application Services
     "crates/services/web-server",
@@ -25,5 +25,8 @@ members = [
 serde_with = {version = "3", features = ["time_0_3"] }
 # -- Data
 modql = { version = "0.4.0-rc", features = ["with-sea-query"]}
+# -- JSON-RPC
+# Lock to specific version during 0.1.x
+rpc-router = { version = "=0.1.3" } 
 # -- Others
 derive_more = {version = "1.0.0-beta", features = ["from", "display"] }

@@ -25,6 +25,7 @@ async fn main() -> Result<()> {
 	let req_create_agent = hc.do_post(
 		"/api/rpc",
 		json!({
+			"jsonrpc": "2.0",
 			"id": 1,
 			"method": "create_agent",
 			"params": {
@@ -42,6 +43,7 @@ async fn main() -> Result<()> {
 	let req_get_agent = hc.do_post(
 		"/api/rpc",
 		json!({
+			"jsonrpc": "2.0",
 			"id": 1,
 			"method": "get_agent",
 			"params": {
@@ -56,6 +58,7 @@ async fn main() -> Result<()> {
 	let req_create_conv = hc.do_post(
 		"/api/rpc",
 		json!({
+			"jsonrpc": "2.0",
 			"id": 1,
 			"method": "create_conv",
 			"params": {
@@ -74,6 +77,7 @@ async fn main() -> Result<()> {
 	let req_create_conv = hc.do_post(
 		"/api/rpc",
 		json!({
+			"jsonrpc": "2.0",
 			"id": 1,
 			"method": "add_conv_msg",
 			"params": {

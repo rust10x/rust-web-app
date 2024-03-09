@@ -9,6 +9,9 @@ doctest = false
 [lints]
 workspace = true
 
+[features]
+with-rpc = ["rpc-router"]
+
 [dependencies]
 # -- App Libs
 lib-utils = { path = "../../libs/lib-utils"}
@@ -30,6 +33,9 @@ tracing = "0.1"
 uuid = {version = "1", features = ["v4","fast-rng",]}
 time = {version = "0.3", features = ["formatting", "parsing", "serde"]}
 derive_more = { workspace = true }
+
+# -- Feature: with-rpc
+rpc-router = { workspace = true, optional = true }
 
 [dev-dependencies]
 serial_test = "3"

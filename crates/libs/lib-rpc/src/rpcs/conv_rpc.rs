@@ -4,8 +4,8 @@ use lib_core::model::conv::{
 };
 use lib_core::model::conv_msg::{ConvMsg, ConvMsgForCreate};
 
-pub fn rpc_router() -> RpcRouter {
-	rpc_router!(
+pub fn rpc_router_builder() -> RouterBuilder {
+	router_builder!(
 		// Same as RpcRouter::new().add...
 		create_conv,
 		get_conv,

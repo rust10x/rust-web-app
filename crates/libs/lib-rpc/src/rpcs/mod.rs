@@ -1,12 +1,17 @@
-use crate::router::RpcRouter;
+// region:    --- Modules
 
-pub mod agent_rpc;
-pub mod conv_rpc;
 mod macro_utils;
 mod prelude;
 
-pub fn all_rpc_router() -> RpcRouter {
-	RpcRouter::new()
-		.extend(agent_rpc::rpc_router())
-		.extend(conv_rpc::rpc_router())
+pub mod agent_rpc;
+pub mod conv_rpc;
+
+use rpc_router::{Router, RouterBuilder};
+
+// endregion: --- Modules
+
+pub fn all_rpc_router_builder() -> RouterBuilder {
+	Router::builder()
+		.extend(agent_rpc::rpc_router_builder())
+		.extend(conv_rpc::rpc_router_builder())
 }

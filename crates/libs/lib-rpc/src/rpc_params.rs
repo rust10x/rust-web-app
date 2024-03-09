@@ -4,15 +4,13 @@
 //! Most of these base constructs use generics for their respective data elements, allowing
 //! each rpc handler function to receive the exact desired type.
 //!
-//! `IntoParams` or `IntoDefaultParams` are implemented to ensure these Params conform to the
+//! `IntoParams` or `IntoDefaultRpcParams` are implemented to ensure these Params conform to the
 //! `RpcRouter` (i.e., `rpc::router`) model.
 
-use crate::router::{IntoDefaultParams, IntoParams};
-use crate::Result;
 use modql::filter::ListOptions;
+use rpc_router::{IntoDefaultRpcParams, IntoParams};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
-use serde_json::Value;
 use serde_with::{serde_as, OneOrMany};
 
 /// Params structure for any RPC Create call.
@@ -51,33 +49,7 @@ where
 	pub list_options: Option<ListOptions>,
 }
 
-impl<D> IntoDefaultParams for ParamsList<D> where D: DeserializeOwned + Send + Default
-{}
-
-// region:    --- General Implementations
-
-/// Implements `IntoParams` for any type that also implements `IntoParams`.
-///
-/// Note: Application code might prefer to avoid this blanket implementation
-///       and opt for enabling it on a per-type basis instead. If that's the case,
-///       simply remove this general implementation and provide specific
-///       implementations for each type.
-impl<D> IntoParams for Option<D>
-where
-	D: DeserializeOwned + Send,
-	D: IntoParams,
+impl<D> IntoDefaultRpcParams for ParamsList<D> where
+	D: DeserializeOwned + Send + Default
 {
-	fn into_params(value: Option<Value>) -> Result<Self> {
-		let value = value.map(|v| serde_json::from_value(v)).transpose()?;
-		Ok(value)
-	}
 }
-
-/// This is the IntoParams implementation for serde_json Value.
-///
-/// Note: As above, this might not be a capability app code might want to
-///       allow for rpc_handlers, prefering to have everything strongly type.
-///       In this case, just remove this impelementation
-impl IntoParams for Value {}
-
-// endregion: --- General Implementations

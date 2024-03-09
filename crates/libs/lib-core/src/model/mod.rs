@@ -40,6 +40,7 @@ use crate::model::store::new_db_pool;
 
 // region:    --- ModelManager
 
+#[cfg_attr(feature = "with-rpc", derive(rpc_router::RpcResource))]
 #[derive(Clone)]
 pub struct ModelManager {
 	dbx: Dbx,

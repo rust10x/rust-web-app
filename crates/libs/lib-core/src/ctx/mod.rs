@@ -6,6 +6,7 @@ pub use self::error::{Error, Result};
 
 // endregion: --- Modules
 
+#[cfg_attr(feature = "with-rpc", derive(rpc_router::RpcResource))]
 #[derive(Clone, Debug)]
 pub struct Ctx {
 	user_id: i64,
