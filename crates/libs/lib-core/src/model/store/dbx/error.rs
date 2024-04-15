@@ -10,6 +10,7 @@ pub enum Error {
 	TxnCantCommitNoOpenTxn,
 	CannotBeginTxnWithTxnFalse,
 	CannotCommitTxnWithTxnFalse,
+	NoTxn,
 
 	// -- Externals
 	#[from]
