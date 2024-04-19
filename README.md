@@ -3,6 +3,14 @@
 More info at: https://rust10x.com/web-app
 Discord: https://discord.gg/XuKWrNGKpC
 
+# Note last commit with `modql 0.4.0-rc.4`
+
+- There is a small change in the `SeaField::new(iden, value)` where the value is now `impl Into<SimpleExpr>`. 
+	- `so change:` `SeaField::new(UserIden::Pwd, pwd.into())`
+	- `       to:` `SeaField::new(UserIden::Pwd, pwd)`
+
+You can find this change in the `. update to modql 0.4.0-rc.4`
+
 # IMPORTANT NOTE on E06 - 2024-01-23 BIG UPDATE
 
 This update ([GitHub tag: E06](https://github.com/rust10x/rust-web-app/releases/tag/E06)) is significant in many respects:

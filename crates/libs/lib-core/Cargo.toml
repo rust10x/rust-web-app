@@ -31,7 +31,7 @@ modql = { workspace = true }
 tracing = "0.1"
 # -- Others
 uuid = {version = "1", features = ["v4","fast-rng",]}
-time = {version = "0.3", features = ["formatting", "parsing", "serde"]}
+time = { workspace = true }
 derive_more = { workspace = true }
 
 # -- Feature: with-rpc

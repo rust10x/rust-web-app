@@ -9,10 +9,7 @@ where
 	MC: DbBmc,
 {
 	if MC::has_owner_id() {
-		fields.push(SeaField::new(
-			CommonIden::OwnerId.into_iden(),
-			user_id.into(),
-		));
+		fields.push(SeaField::new(CommonIden::OwnerId.into_iden(), user_id));
 	}
 	if MC::has_timestamps() {
 		add_timestamps_for_create(fields, user_id);
@@ -33,26 +30,17 @@ where
 /// (e.g., cid, ctime, and mid, mtime will be updated with the same values)
 fn add_timestamps_for_create(fields: &mut SeaFields, user_id: i64) {
 	let now = now_utc();
-	fields.push(SeaField::new(
-		TimestampIden::Cid.into_iden(),
-		user_id.into(),
-	));
-	fields.push(SeaField::new(TimestampIden::Ctime.into_iden(), now.into()));
+	fields.push(SeaField::new(TimestampIden::Cid, user_id));
+	fields.push(SeaField::new(TimestampIden::Ctime, now));
 
-	fields.push(SeaField::new(
-		TimestampIden::Mid.into_iden(),
-		user_id.into(),
-	));
-	fields.push(SeaField::new(TimestampIden::Mtime.into_iden(), now.into()));
+	fields.push(SeaField::new(TimestampIden::Mid, user_id));
+	fields.push(SeaField::new(TimestampIden::Mtime, now));
 }
 
 /// Update the timestamps info only for update.
 /// (.e.g., only mid, mtime will be udpated)
 fn add_timestamps_for_update(fields: &mut SeaFields, user_id: i64) {
 	let now = now_utc();
-	fields.push(SeaField::new(
-		TimestampIden::Mid.into_iden(),
-		user_id.into(),
-	));
-	fields.push(SeaField::new(TimestampIden::Mtime.into_iden(), now.into()));
+	fields.push(SeaField::new(TimestampIden::Mid, user_id));
+	fields.push(SeaField::new(TimestampIden::Mtime, now));
 }

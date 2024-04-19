@@ -26,11 +26,10 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # -- Rpc
 rpc-router = { workspace = true }
 # -- Others
-time = "0.3"
+time = { workspace = true }
 uuid = {version = "1", features = ["v4","fast-rng",]}
 strum_macros = "0.26"
 derive_more = { workspace = true }
 
 [dev-dependencies]
 httpc-test = "0.1"
-time = "0.3"
