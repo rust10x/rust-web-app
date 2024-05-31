@@ -47,6 +47,14 @@ macro_rules! generate_common_bmc_fns {
 				) -> Result<Vec<$entity>> {
 					base::list::<Self, _, _>(ctx, mm, filter, list_options).await
 				}
+
+				pub async fn count(
+					ctx: &Ctx,
+					mm: &ModelManager,
+					filter: Option<Vec<$filter>>,
+				) -> Result<i64> {
+					base::count::<Self, _>(ctx, mm, filter).await
+				}
 			)?
 
 			$(

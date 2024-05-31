@@ -20,6 +20,8 @@ pub enum Error {
 		actual: i64,
 	},
 
+	CountFail,
+
 	// -- DB
 	UserAlreadyExists {
 		username: String,

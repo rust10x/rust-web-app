@@ -11,6 +11,7 @@ use sea_query::{Condition, Expr, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use sqlx::postgres::PgRow;
 use sqlx::FromRow;
+use sqlx::Row;
 
 pub async fn create<MC, E>(ctx: &Ctx, mm: &ModelManager, data: E) -> Result<i64>
 where
@@ -140,6 +141,44 @@ where
 	let entities = mm.dbx().fetch_all(sqlx_query).await?;
 
 	Ok(entities)
+}
+
+pub async fn count<MC, F>(
+	_ctx: &Ctx,
+	mm: &ModelManager,
+	filter: Option<F>,
+) -> Result<i64>
+where
+	MC: DbBmc,
+	F: Into<FilterGroups>,
+{
+	let db = mm.dbx().db();
+	// -- Build the query
+	let mut query = Query::select()
+		.from(MC::table_ref())
+		.expr(Expr::col(sea_query::Asterisk).count())
+		.to_owned();
+
+	// condition from filter
+	if let Some(filter) = filter {
+		let filters: FilterGroups = filter.into();
+		let cond: Condition = filters.try_into()?;
+		query.cond_where(cond);
+	}
+
+	let query_str = query.to_string(PostgresQueryBuilder);
+
+	let result = sqlx::query(&query_str).fetch_one(db).await.map_err(|e| {
+		println!("{e:#?}");
+		Error::CountFail
+	})?;
+
+	let count: i64 = result.try_get("count").map_err(|e| {
+		println!("{e:#?}");
+		Error::CountFail
+	})?;
+
+	Ok(count)
 }
 
 pub async fn update<MC, E>(
