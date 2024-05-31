@@ -126,6 +126,39 @@ mod tests {
 
 	#[serial]
 	#[tokio::test]
+	async fn test_create_many_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let mm = _dev_utils::init_test().await;
+		let ctx = Ctx::root_ctx();
+		let fx_name = "test_create_ok agent 01";
+
+		// -- Exec
+		let fx_agent_c = AgentForCreate {
+			name: fx_name.to_string(),
+		};
+		let fx_agent_c2 = AgentForCreate {
+			name: fx_name.to_string(),
+		};
+
+		let agent_ids =
+			AgentBmc::create_many(&ctx, &mm, vec![fx_agent_c, fx_agent_c2]).await?;
+
+		let agent_filter: AgentFilter = serde_json::from_value(json!(
+			{
+				"id": {"$in": agent_ids}
+			}
+		))?;
+
+		let agents =
+			AgentBmc::list(&ctx, &mm, Some(vec![agent_filter]), None).await?;
+
+		assert_eq!(agents.len(), 2, "should have only retrieved 2 agents");
+
+		Ok(())
+	}
+
+	#[serial]
+	#[tokio::test]
 	async fn test_update_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let mm = _dev_utils::init_test().await;
@@ -174,6 +207,42 @@ mod tests {
 			matches!(&res, Err(model::Error::EntityNotFound { .. })),
 			"should return a EntityNotFound"
 		);
+
+		Ok(())
+	}
+	#[serial]
+	#[tokio::test]
+	async fn test_delete_many_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let mm = _dev_utils::init_test().await;
+		let ctx = Ctx::root_ctx();
+		let fx_name = "test_create_ok agent 01";
+
+		// -- Exec
+		let fx_agent_c = AgentForCreate {
+			name: fx_name.to_string(),
+		};
+		let fx_agent_c2 = AgentForCreate {
+			name: fx_name.to_string(),
+		};
+
+		let agent_ids =
+			AgentBmc::create_many(&ctx, &mm, vec![fx_agent_c, fx_agent_c2]).await?;
+
+		let agent_filter: AgentFilter = serde_json::from_value(json!(
+			{
+				"id": {"$in": agent_ids}
+			}
+		))?;
+
+		let agents =
+			AgentBmc::list(&ctx, &mm, Some(vec![agent_filter]), None).await?;
+
+		assert_eq!(agents.len(), 2, "should have only retrieved 2 agents");
+
+		let deleted = AgentBmc::delete_many(&ctx, &mm, agent_ids).await?;
+
+		assert_eq!(deleted, agents.len() as u64);
 
 		Ok(())
 	}
