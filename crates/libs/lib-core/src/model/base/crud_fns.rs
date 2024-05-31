@@ -168,15 +168,12 @@ where
 
 	let query_str = query.to_string(PostgresQueryBuilder);
 
-	let result = sqlx::query(&query_str).fetch_one(db).await.map_err(|e| {
-		println!("{e:#?}");
-		Error::CountFail
-	})?;
+	let result = sqlx::query(&query_str)
+		.fetch_one(db)
+		.await
+		.map_err(|_| Error::CountFail)?;
 
-	let count: i64 = result.try_get("count").map_err(|e| {
-		println!("{e:#?}");
-		Error::CountFail
-	})?;
+	let count: i64 = result.try_get("count").map_err(|_| Error::CountFail)?;
 
 	Ok(count)
 }
