@@ -42,6 +42,49 @@ where
 	Ok(id)
 }
 
+pub async fn create_many<MC, E>(
+	ctx: &Ctx,
+	mm: &ModelManager,
+	data: Vec<E>,
+) -> Result<Vec<i64>>
+where
+	MC: DbBmc,
+	E: HasSeaFields,
+{
+	let user_id = ctx.user_id();
+	let mut ids = Vec::with_capacity(data.len());
+
+	// Prepare insert query
+	let mut query = Query::insert();
+
+	for item in data {
+		let mut fields = item.not_none_sea_fields();
+		prep_fields_for_create::<MC>(&mut fields, user_id);
+		let (columns, sea_values) = fields.for_sea_insert();
+
+		// Append values for each item
+		query
+			.into_table(MC::table_ref())
+			.columns(columns.clone())
+			.values(sea_values)?;
+	}
+
+	query.returning(Query::returning().columns([CommonIden::Id]));
+
+	// Execute query
+	let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
+	let sqlx_query = sqlx::query_as_with::<_, (i64,), _>(&sql, values);
+
+	let rows = mm.dbx().fetch_all(sqlx_query).await?;
+
+	for row in rows {
+		let (id,): (i64,) = row;
+		ids.push(id);
+	}
+
+	Ok(ids)
+}
+
 pub async fn get<MC, E>(_ctx: &Ctx, mm: &ModelManager, id: i64) -> Result<E>
 where
 	MC: DbBmc,
@@ -203,6 +246,40 @@ where
 		})
 	} else {
 		Ok(())
+	}
+}
+
+pub async fn delete_many<MC>(
+	_ctx: &Ctx,
+	mm: &ModelManager,
+	ids: Vec<i64>,
+) -> Result<u64>
+where
+	MC: DbBmc,
+{
+	if ids.is_empty() {
+		return Ok(0);
+	}
+
+	// -- Build query
+	let mut query = Query::delete();
+	query
+		.from_table(MC::table_ref())
+		.and_where(Expr::col(CommonIden::Id).is_in(ids.clone()));
+
+	// -- Execute query
+	let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
+	let sqlx_query = sqlx::query_with(&sql, values);
+	let result = mm.dbx().execute(sqlx_query).await?;
+
+	// -- Check result
+	if result as usize != ids.len() {
+		Err(Error::EntityNotFound {
+			entity: MC::TABLE,
+			id: 0, // Using 0 because multiple IDs could be not found, you may want to improve error handling here
+		})
+	} else {
+		Ok(result)
 	}
 }
 
