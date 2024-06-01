@@ -86,6 +86,24 @@ impl Dbx {
 		Ok(())
 	}
 
+	pub async fn rollback_txn(&self) -> Result<()> {
+		let mut txh_g = self.txn_holder.lock().await;
+		if let Some(mut txn_holder) = txh_g.take() {
+			// Take the TxnHolder out of the Option
+			if txn_holder.counter > 1 {
+				txn_holder.counter -= 1;
+				let _ = txh_g.replace(txn_holder); // Put it back if not the last reference
+			} else {
+				// Perform the actual rollback
+				txn_holder.txn.rollback().await?;
+				// No need to replace, as we want to leave it as None
+			}
+			Ok(())
+		} else {
+			Err(Error::NoTxn)
+		}
+	}
+
 	pub async fn commit_txn(&self) -> Result<()> {
 		if !self.with_txn {
 			return Err(Error::CannotCommitTxnWithTxnFalse);
