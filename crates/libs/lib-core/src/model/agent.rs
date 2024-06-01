@@ -315,6 +315,33 @@ mod tests {
 
 		Ok(())
 	}
+	#[serial]
+	#[tokio::test]
+	async fn test_count_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let mm = _dev_utils::init_test().await;
+		let ctx = Ctx::root_ctx();
+
+		let fx_agent_names = &["test_list_ok agent 01", "test_list_ok agent 02"];
+		seed_agents(&ctx, &mm, fx_agent_names).await?;
+
+		// -- Exec
+		let agent_filter: AgentFilter = serde_json::from_value(json!(
+			{
+				"name": {"$contains": "list_ok agent"}
+			}
+		))?;
+		let count = AgentBmc::count(&ctx, &mm, Some(vec![agent_filter])).await?;
+
+		// -- Check
+		assert_eq!(count, 2);
+
+		// -- Clean
+		let count = clean_agents(&ctx, &mm, "test_list_ok agent").await?;
+		assert_eq!(count, 2, "Should have cleaned 2 agents");
+
+		Ok(())
+	}
 }
 
 // endregion: --- Tests
