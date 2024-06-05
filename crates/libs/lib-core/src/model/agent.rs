@@ -130,7 +130,7 @@ mod tests {
 		// -- Setup & Fixtures
 		let mm = _dev_utils::init_test().await;
 		let ctx = Ctx::root_ctx();
-		let fx_name = "test_create_ok agent 01";
+		let fx_name = "test_create_many_ok agent 01";
 
 		// -- Exec
 		let fx_agent_c = AgentForCreate {
