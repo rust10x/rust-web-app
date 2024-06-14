@@ -59,7 +59,7 @@ where
 	let mut query = Query::insert();
 
 	for item in data {
-		let mut fields = item.not_none_sea_fields();
+		let mut fields = item.all_sea_fields();
 		prep_fields_for_create::<MC>(&mut fields, user_id);
 		let (columns, sea_values) = fields.for_sea_insert();
 
