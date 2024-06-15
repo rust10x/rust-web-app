@@ -40,7 +40,7 @@ pub enum Error {
 	#[from]
 	Token(token::Error),
 	#[from]
-	Rpc(lib_rpc::Error),
+	Rpc(lib_rpc_core::Error),
 
 	// -- RpcError (deconstructed from rpc_router::Error)
 	// Simple mapping for the RpcRequestParsingError. It will have the eventual id, method context.
@@ -48,7 +48,7 @@ pub enum Error {
 	RpcRequestParsing(rpc_router::RequestParsingError),
 
 	// When encountering `rpc_router::Error::Handler`, we deconstruct it into the appropriate concrete application error types.
-	RpcLibRpc(lib_rpc::Error),
+	RpcLibRpc(lib_rpc_core::Error),
 	// ... more types might be here, depending on our Error strategy. Usually, one per library crate is sufficient.
 
 	// When it's `rpc_router::Error::Handler` but we did not handle the type,
@@ -85,7 +85,7 @@ impl From<rpc_router::CallError> for Error {
 		match error {
 			rpc_router::Error::Handler(mut rpc_handler_error) => {
 				if let Some(lib_rpc_error) =
-					rpc_handler_error.remove::<lib_rpc::Error>()
+					rpc_handler_error.remove::<lib_rpc_core::Error>()
 				{
 					Error::RpcLibRpc(lib_rpc_error)
 				}

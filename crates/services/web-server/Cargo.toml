@@ -6,7 +6,8 @@ edition = "2021"
 [dependencies]
 # -- App Libs
 lib-utils = { path = "../../libs/lib-utils"}
-lib-rpc = { path = "../../libs/lib-rpc"}
+lib-rpc-app = { path = "../../libs/lib-rpc-app"}
+lib-rpc-core = { path = "../../libs/lib-rpc-core"}
 lib-auth = { path = "../../libs/lib-auth"}
 lib-core = { path = "../../libs/lib-core"}
 # -- Async

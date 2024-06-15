@@ -1,17 +1,15 @@
 [package]
-name = "lib-rpc"
+name = "lib-rpc-app"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-doctest = false
-
-[lints]
-workspace = true
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 # -- App Libs
 lib-core = { path = "../../libs/lib-core", features = ["with-rpc"] }
+lib-rpc-core = { path = "../../libs/lib-rpc-core"}
+
 # -- Async
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
@@ -26,3 +24,6 @@ rpc-router = { workspace = true }
 # -- Others
 paste = "1"
 derive_more = { workspace = true }
+
+[lints]
+workspace = true
