@@ -6,16 +6,17 @@ unsafe_code = "forbid"
 resolver = "2"
 members = [
     # -- Application Libraries
-    "crates/libs/lib-utils", # e.g., base64, time.
-    "crates/libs/lib-rpc",   # e.g., app rpc handlers (using rpc-router crate)
-    "crates/libs/lib-auth",  # e.g., for pwd, token.
-    "crates/libs/lib-core",  # e.g., model, ctx, config.
+    "crates/libs/lib-utils",      # e.g., base64, time.
+    "crates/libs/lib-rpc-core",   # e.g., core rpc utils (using rpc-router crate)
+    "crates/libs/lib-rpc-app",    # e.g., rpc demo handlers (using rpc-router crate)
+    "crates/libs/lib-auth",       # e.g., for pwd, token.
+    "crates/libs/lib-core",       # e.g., model, ctx, config.
 
     # -- Application Services
     "crates/services/web-server",
 
     # -- Tools
-    "crates/tools/gen-key",    
+    "crates/tools/gen-key",
 ]
 
 # NOTE: Only the crates that are utilized in two or more sub-crates and benefit from global management
