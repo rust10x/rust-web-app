@@ -4,7 +4,7 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::post;
 use axum::{Json, Router};
 use lib_core::model::ModelManager;
-use lib_rpc_app::all_rpc_router_builder;
+use lib_rpc_demo::all_rpc_router_builder;
 use rpc_router::resources_builder;
 use serde_json::{json, Value};
 use std::sync::Arc;
