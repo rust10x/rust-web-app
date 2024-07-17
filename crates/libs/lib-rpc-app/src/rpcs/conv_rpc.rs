@@ -1,4 +1,4 @@
-use crate::rpcs::prelude::*;
+use lib_rpc_core::prelude::*;
 use lib_core::model::conv::{
 	Conv, ConvBmc, ConvFilter, ConvForCreate, ConvForUpdate,
 };
