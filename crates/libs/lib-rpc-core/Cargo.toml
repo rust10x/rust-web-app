@@ -1,0 +1,28 @@
+[package]
+name = "lib-rpc-core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+# -- App Libs
+lib-core = { path = "../../libs/lib-core", features = ["with-rpc"] }
+# -- Async
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+# -- Json
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_with = { workspace = true }
+# -- Data
+modql = { workspace = true }
+# -- Rpc
+rpc-router = { workspace = true }
+# -- Others
+paste = "1"
+derive_more = { workspace = true }
