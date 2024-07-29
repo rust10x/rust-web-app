@@ -25,12 +25,10 @@ members = [
 serde_with = {version = "3", features = ["time_0_3"] }
 # -- Data
 # Note: we lock modql version during rcs
-modql = { version = "=0.4.0-rc.6", features = ["with-sea-query"]}
+modql = { version = "=0.4.0-rc.8", features = ["with-sea-query"]}
 # -- JSON-RPC
 # Lock to specific version during 0.1.x
 rpc-router = { version = "=0.1.3" } 
 # -- Others
-# NOTE: time is set as `<0.3.35` to match sea-query-binder version 0.6.0-rc.2 (see https://github.com/SeaQL/sea-query/issues/772)
-#       will set back to `0.3` as soon as sea-query-binder 0.6.0-rc is fix
-time = {version = "<0.3.35", features = ["formatting", "parsing", "serde"]}
+time = {version = "0.3", features = ["formatting", "parsing", "serde"]}
 derive_more = {version = "1.0.0-beta", features = ["from", "display"] }
