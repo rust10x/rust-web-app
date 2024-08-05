@@ -1,16 +1,15 @@
 [package]
-name = "web-server"
+name = "lib-web"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 # -- App Libs
 lib-utils = { path = "../../libs/lib-utils"}
-lib-rpc-app = { path = "../../libs/lib-rpc-app"}
 lib-rpc-core = { path = "../../libs/lib-rpc-core"}
 lib-auth = { path = "../../libs/lib-auth"}
 lib-core = { path = "../../libs/lib-core"}
-lib-web = { path = "../../libs/lib-web"}
+
 # -- Async
 tokio = { version = "1", features = ["full"] }
 # -- Json
@@ -32,5 +31,5 @@ uuid = {version = "1", features = ["v4","fast-rng",]}
 strum_macros = "0.26"
 derive_more = { workspace = true }
 
-[dev-dependencies]
-httpc-test = "0.1"
+[lints]
+workspace = true

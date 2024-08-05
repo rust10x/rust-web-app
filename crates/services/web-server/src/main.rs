@@ -2,16 +2,19 @@
 
 mod config;
 mod error;
-mod log;
 mod web;
 
 pub use self::error::{Error, Result};
 use config::web_config;
 
-use crate::web::mw_auth::{mw_ctx_require, mw_ctx_resolver};
-use crate::web::mw_req_stamp::mw_req_stamp_resolver;
-use crate::web::mw_res_map::mw_reponse_map;
-use crate::web::{routes_login, routes_static};
+use lib_web::middleware::mw_auth::{mw_ctx_require, mw_ctx_resolver};
+use lib_web::middleware::mw_req_stamp::mw_req_stamp_resolver;
+use lib_web::middleware::mw_res_map::mw_reponse_map;
+use lib_web::routes::routes_static;
+
+use crate::web::routes_login;
+
+
 use axum::{middleware, Router};
 use lib_core::_dev_utils;
 use lib_core::model::ModelManager;
@@ -46,7 +49,7 @@ async fn main() -> Result<()> {
 		.layer(middleware::from_fn_with_state(mm.clone(), mw_ctx_resolver))
 		.layer(CookieManagerLayer::new())
 		.layer(middleware::from_fn(mw_req_stamp_resolver))
-		.fallback_service(routes_static::serve_dir());
+		.fallback_service(routes_static::serve_dir(&web_config().WEB_FOLDER));
 
 	// region:    --- Start Server
 	// Note: For this block, ok to unwrap.

@@ -11,12 +11,13 @@ members = [
     "crates/libs/lib-rpc-app",    # e.g., rpc handlers for app (using rpc-router crate)
     "crates/libs/lib-auth",       # e.g., for pwd, token.
     "crates/libs/lib-core",       # e.g., model, ctx, config.
+    "crates/libs/lib-web",        # e.g., logging, common middleware etc
 
     # -- Application Services
     "crates/services/web-server",
 
     # -- Tools
-    "crates/tools/gen-key",
+    "crates/tools/gen-key", 
 ]
 
 # NOTE: Only the crates that are utilized in two or more sub-crates and benefit from global management
