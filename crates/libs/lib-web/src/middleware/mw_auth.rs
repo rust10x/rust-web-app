@@ -1,5 +1,5 @@
-use crate::web::{set_token_cookie, AUTH_TOKEN};
-use crate::web::{Error, Result};
+use crate::error::{Error, Result};
+use crate::utils::token::{set_token_cookie, AUTH_TOKEN};
 use axum::async_trait;
 use axum::body::Body;
 use axum::extract::{FromRequestParts, State};

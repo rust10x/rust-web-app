@@ -1,8 +1,9 @@
 use crate::log::log_request;
-use crate::web::mw_auth::CtxW;
-use crate::web::mw_req_stamp::ReqStamp;
-use crate::web::routes_rpc::RpcInfo;
-use crate::web::{self};
+use crate::middleware::mw_auth::CtxW;
+use crate::middleware::mw_req_stamp::ReqStamp;
+use crate::handlers::handlers_rpc::RpcInfo;
+use crate::error::Error;
+
 use axum::http::{Method, Uri};
 use axum::response::{IntoResponse, Response};
 use axum::Json;
@@ -26,7 +27,7 @@ pub async fn mw_reponse_map(
 	let rpc_info = res.extensions().get::<Arc<RpcInfo>>().map(Arc::as_ref);
 
 	// -- Get the eventual response error.
-	let web_error = res.extensions().get::<Arc<web::Error>>().map(Arc::as_ref);
+	let web_error = res.extensions().get::<Arc<Error>>().map(Arc::as_ref);
 	let client_status_error = web_error.map(|se| se.client_status_and_error());
 
 	// -- If client error, build the new reponse.

@@ -1,4 +1,4 @@
-use crate::web;
+use crate::middleware;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use derive_more::From;
@@ -27,7 +27,7 @@ pub enum Error {
 
 	// -- CtxExtError
 	#[from]
-	CtxExt(web::mw_auth::CtxExtError),
+	CtxExt(middleware::mw_auth::CtxExtError),
 
 	// -- Extractors
 	ReqStampNotInReqExt,
@@ -74,11 +74,11 @@ pub enum Error {
 /// and place them into the appropriate variant of our application error enum.
 ///
 /// - The `rpc-router` provides an `RpcHandlerError` scheme to allow application RPC handlers
-///   to return the errors they wish with minimal constraints.
+/// to return the errors they wish with minimal constraints.
 /// - This approach requires us to "unpack" those types in our code and assign them to the correct
-///   "concrete/direct" variant (not `Box<dyn Any>`...).
+/// "concrete/direct" variant (not `Box<dyn Any>`...).
 /// - If it's not an `rpc_router::Error::Handler` variant, then we can capture the `rpc_router::Error`
-///   as it is, treating all other variants as "concrete/direct" types.
+/// as it is, treating all other variants as "concrete/direct" types.
 impl From<rpc_router::CallError> for Error {
 	fn from(call_error: rpc_router::CallError) -> Self {
 		let rpc_router::CallError { id, method, error } = call_error;
@@ -137,7 +137,7 @@ impl std::error::Error for Error {}
 /// From the root error to the http status code and ClientError
 impl Error {
 	pub fn client_status_and_error(&self) -> (StatusCode, ClientError) {
-		use web::Error::*; // TODO: should change to `use web::Error as E`
+		use Error::*; // TODO: should change to `use web::Error as E`
 
 		match self {
 			// -- Login

@@ -1,7 +1,7 @@
-use crate::web::mw_req_stamp::ReqStamp;
-use crate::web::routes_rpc::RpcInfo;
-use crate::web::{self, ClientError};
-use crate::Result;
+use crate::middleware::mw_req_stamp::ReqStamp;
+use crate::handlers::handlers_rpc::RpcInfo;
+use crate::error::{Error, ClientError};
+use crate::error::Result;
 use axum::http::{Method, Uri};
 use lib_core::ctx::Ctx;
 use lib_utils::time::{format_time, now_utc};
@@ -17,7 +17,7 @@ pub async fn log_request(
 	req_stamp: ReqStamp,
 	rpc_info: Option<&RpcInfo>,
 	ctx: Option<Ctx>,
-	web_error: Option<&web::Error>,
+	web_error: Option<&Error>,
 	client_error: Option<ClientError>,
 ) -> Result<()> {
 	// -- Prep error

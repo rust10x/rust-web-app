@@ -1,4 +1,4 @@
-use crate::web::{Error, Result};
+use crate::error::{Error, Result};
 use axum::async_trait;
 use axum::body::Body;
 use axum::extract::FromRequestParts;
