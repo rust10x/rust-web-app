@@ -2,7 +2,7 @@
 
 I made this doc while listening to [Rust Axum Full Course](https://www.youtube.com/watch?v=XZtlD_m59sM). The notes are from the perspective of an experienced software dev knowledgeable in some mainstream programming languages but with 0 experience in Rust. I wanted to see if I could apply the [do things that don't scale](https://paulgraham.com/ds.html) approach. It was a bit of an overreach to try to learn Rust while learning from a video from a seasoned rust professional about best-practices. However, while it took me a while to pay attention to trailing `;` and `?` _(such significant semantics to those two characters)_, I could learn rust on demand while also learning about web-services in rust. Highly recommended if you already have some understanding of other general purpose programming languages. Totally saves you the time needed to first grok rust from books.
 
-👉 I have not spent time on making this particularly useful to any specific audience. This worked for me and made sense on a second pass as well. I am moving this out of my private notes stash into the fork hoping it is of some use to someone on a similar journey.
+👉 I have not targeted the doc to any specific audience. Whatever worked for me and survived a second pass a month later, made it in. I am moving this out of my private notes and into the fork hoping it is of use to someone on a similar journey.
 
 ## Resources
 
@@ -37,212 +37,11 @@ This is remarkable and worth a mindmap only because I am starting out brand new.
 
 Decorating a class with `#[derive(Debug)]` is all that is needed to get some field-wise debug output. Keeping it as a library feature on baked into the language is such a great choice. The DX is lovely so far.
 
-```plantuml
-@startmindmap
-* Rust
-
-** Function 
-***: args can be **direct destructured** from structs!
- - if tuple names used in order
- - if struct, names must match struct field names
-   order need not be preserved ?;
-****_ func ( TupleStructName(a,b))
-****_ func ( FieldStructName{a,b})
-
-** Types
-***_ **()** is void
-*** enums
-****_ items are called **Variants**
-****_ variants can be structs
-****_ have to be CamelCased! unless specially annotated
-****_ **#[allow(non_camel_case_types)]**
-
-** IO
-***: **{}**, the format specifier, is of form 
-**{ obj : format }**
- - //format=// **? ** means Debug, via **[#derive(Debug)]** annotation
- - No format means obj should implement the 
-   std::fmt::Display trait;
-
-** async
-***_ **async fn** syntactic sugar for **fn .. -> Future<>**
-***_ **await** waits on an //async// operation
-***: **awat?** is an //await// operator followed by a **?** operation
- syntax sugar for //return on error// equiv to
-
- //match asyncFunc.await {//
- //   Ok(value) => value,//
- //   Err(error) => return Err(error.into()),//
- //}//
-;
-*** **Arc** - //Atomically reference counted//
-*** Mutex   
-
-** Option
-***_ .take()
-***_ .ok_or(..)
-
-** Containers
-***_ Vec
-
-** dependencies
-***_ tokio
-***_ serde: SErialize + DEserialize → //serde//
-***_ serde-json
-***_ axum
-***_ tower-http
-***_ tower-cookies
-***_ lazy-regex
-
-** dev-dependencies
-***_ anyhow 
-***_ httpc-test
-
-** DX
-*** Special **todo!()** placeholder impl for functions
-*** Destructuring in function params
-*** Blocks having return values
-
-'------------------------------
-'  Derive blocks
-'------------------------------
-*[#orange] **#[derive(..)]**
-**_ of form **#[derive(Trait1, .., TraitN)]**
-**_ Attribute on a struct
-**_ Asks for auto generating a suitable implementation of traits
-
-**[#yellow] **#[derive(Debug)]**
-***_ Adds **fn fmt(&self, std::fmt::Formatter) -> Result**
-***_ Usable via **{:?}** format string
-
-**[#yellow] **#[derive(Deserialize)]**
-***_ + //serde = {version="1", features=["derive]"}//
-***_ + //serde_json="1"//
-***_ //serde_json::to_string(&obj).unwrap();//
-***_ //serde_json::from_string(&serialized).unwrap();//
-***_ See https://serde.rs/derive.html
-
-'-----------------------------
-'  Specal uses of rust
-'-----------------------------
-*[#orange] Rust Specials
-**:**Option<T>.as_deref()** converts to //Option<&T >//
-avoid string creation he says. T=String.;
-
-'-----------------------------
-*[#lightpink] Concerns
-**: Auto fill impl for traits
- misc auto complete etc
- Errors and guidance are sometimes 
- incomprehensible;
-
- ** JetBrains maybe way better than VSCode
-
-@endmindmap
-```
+![Rust into observations](./img/rust-intro-observations.svg)
 
 ## Axum concepts
 
-```plantuml
-@startmindmap
-* Axum
-
-'-- Router -------------------
-** Router: Map paths to **IntoService**
-
-*** (path, service)
-**** convert handler to Axum service
-**** use existing axum/tower services
-
-*** merge
-**** non-overlapping path services
-**** fallback_service
-
-*** tower services
-****_ ServeDir
-
-*** handlers
-**** //axum::routing::get//
-**** //axum::routing::post//
-
-'-- Extractors  ------------------
-** Extractors
-***_ https://github.com/tokio-rs/axum/blob/main/axum/src/docs/extract.md
-*** Extractors //FromRequest//, //FromRequestPart// to extract a type from the request
-****: //axum::extract::Query//
-// /hello?name=Mike//;
-****: //axum::extract::Path//
-// /hello2/Mike//;
-
-'-- Request params ---------------
-** Request Params
-***: **:component** path param
-**axum::extract::Path**;
-
-***: **?name=val** query params
-**axum::extract::Query**;
-
-'-- Response  ------------------
-** Response
-*** Html //axum::response::Html//
-*** Json
-
-'-- Payload  ---------------------
-** Payload
-*** Body Extractor: Json
-
-** Middleware
-***_ Mostly from Tower
-***_ map_response
-***[#orange] Cookies
-****_ via **.layer(CookieManagerLayer::new())**
-****_ add **cookies:: Cookies** as first arg to **all** handlers
-****_ set via **cookies.add( Cookies::new(..))**
-
-'-- Context ---------------------
-** Context
-***_ State ?
-
-'-- Handlers --------------------
-** handlers
-***[#yellow]:Axum special, because of extractors and such. 
-A handler can have as few or as many of the args 
-as it needs
- - uri,
- - ctx,
- - state,
- - req_method,
- - req
-
- In any order;
-
-'-- Layers -----------------------
-** Layers
-***_ added onto main router via **.layer(..)**
-***_:
-layered on top semantically so data is passed 
-from bottom to top. i.e., last added layer is 
-used first;
-***_ **.layer(middleware::map_response(main_response_mapper))**
-***_ **.layer(CookieManagerLayer::new())**
-
-@endmindmap
-```
-
-## Best practices
-
-```plantuml
-@startmindmap
-* server errors
-** rust enum: Error say
-***_ impl std::fmt::Display for it
-** expose **Result<T, Error>**
-
-** CRUD - delete
-***_ Comment says better to return **204 NoContent**
-
-@endmindmap
-```
+![Axum intro concepts](./img/axum-intro-concepts.svg)
 
 ## Compatibility
  - Video was taken with Axum 0.6 but latest axum is 0.7.4 which breaks a few things.
@@ -1679,25 +1478,7 @@ async fn main_response_mapper(res: Response) -> Response {
 
 ## Finalize request/server log lines
 
-```plantuml
-@startmindmap
-* Text Output
-
-** Tracing
-***_ Debug output on console or log files
-***_ Lots of information to walk through events
-***_ **mostly for offline reading of logs**
-
-** Request  Logs
-***_ focused on errors and alerts
-***_ added in console logs
-***_:🌟 **usually surfaced in cloud monitoring alerts** 
-        and monitored with some cloud-native tool;
-
-***_ **flat, non-nested info** to allows for easy query
-@endmindmap
-```
-
+![Tracing vs logging](./img/axum-intro-tracing-logs.svg)
 
 ### new module - req_log
 

@@ -1,0 +1,85 @@
+```plantuml
+@startmindmap
+* Axum
+
+'-- Router -------------------
+** Router: Map paths to **IntoService**
+
+*** (path, service)
+**** convert handler to Axum service
+**** use existing axum/tower services
+
+*** merge
+**** non-overlapping path services
+**** fallback_service
+
+*** tower services
+****_ ServeDir
+
+*** handlers
+**** //axum::routing::get//
+**** //axum::routing::post//
+
+'-- Extractors  ------------------
+** Extractors
+***_ https://github.com/tokio-rs/axum/blob/main/axum/src/docs/extract.md
+*** Extractors //FromRequest//, //FromRequestPart// to extract a type from the request
+****: //axum::extract::Query//
+// /hello?name=Mike//;
+****: //axum::extract::Path//
+// /hello2/Mike//;
+
+'-- Request params ---------------
+** Request Params
+***: **:component** path param
+**axum::extract::Path**;
+
+***: **?name=val** query params
+**axum::extract::Query**;
+
+'-- Response  ------------------
+** Response
+*** Html //axum::response::Html//
+*** Json
+
+'-- Payload  ---------------------
+** Payload
+*** Body Extractor: Json
+
+** Middleware
+***_ Mostly from Tower
+***_ map_response
+***[#orange] Cookies
+****_ via **.layer(CookieManagerLayer::new())**
+****_ add **cookies:: Cookies** as first arg to **all** handlers
+****_ set via **cookies.add( Cookies::new(..))**
+
+'-- Context ---------------------
+** Context
+***_ State ?
+
+'-- Handlers --------------------
+** handlers
+***[#yellow]:Axum special, because of extractors and such. 
+A handler can have as few or as many of the args 
+as it needs
+ - uri,
+ - ctx,
+ - state,
+ - req_method,
+ - req
+
+ In any order;
+
+'-- Layers -----------------------
+** Layers
+***_ added onto main router via **.layer(..)**
+***_:
+layered on top semantically so data is passed 
+from bottom to top. i.e., last added layer is 
+used first;
+***_ **.layer(middleware::map_response(main_response_mapper))**
+***_ **.layer(CookieManagerLayer::new())**
+
+@endmindmap
+```

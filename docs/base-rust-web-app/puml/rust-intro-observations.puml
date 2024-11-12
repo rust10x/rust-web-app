@@ -1,0 +1,103 @@
+```plantuml
+@startmindmap
+* Rust
+
+** Function 
+***: args can be **direct destructured** from structs!
+ - if tuple names used in order
+ - if struct, names must match struct field names
+   order need not be preserved ?;
+****_ func ( TupleStructName(a,b))
+****_ func ( FieldStructName{a,b})
+
+** Types
+***_ **()** is void
+*** enums
+****_ items are called **Variants**
+****_ variants can be structs
+****_ have to be CamelCased! unless specially annotated
+****_ **#[allow(non_camel_case_types)]**
+
+** IO
+***: **{}**, the format specifier, is of form 
+**{ obj : format }**
+ - //format=// **? ** means Debug, via **[#derive(Debug)]** annotation
+ - No format means obj should implement the 
+   std::fmt::Display trait;
+
+** async
+***_ **async fn** syntactic sugar for **fn .. -> Future<>**
+***_ **await** waits on an //async// operation
+***: **awat?** is an //await// operator followed by a **?** operation
+ syntax sugar for //return on error// equiv to
+
+ //match asyncFunc.await {//
+ //   Ok(value) => value,//
+ //   Err(error) => return Err(error.into()),//
+ //}//
+;
+*** **Arc** - //Atomically reference counted//
+*** Mutex   
+
+** Option
+***_ .take()
+***_ .ok_or(..)
+
+** Containers
+***_ Vec
+
+** dependencies
+***_ tokio
+***_ serde: SErialize + DEserialize → //serde//
+***_ serde-json
+***_ axum
+***_ tower-http
+***_ tower-cookies
+***_ lazy-regex
+
+** dev-dependencies
+***_ anyhow 
+***_ httpc-test
+
+** DX
+*** Special **todo!()** placeholder impl for functions
+*** Destructuring in function params
+*** Blocks having return values
+
+'------------------------------
+'  Derive blocks
+'------------------------------
+*[#orange] **#[derive(..)]**
+**_ of form **#[derive(Trait1, .., TraitN)]**
+**_ Attribute on a struct
+**_ Asks for auto generating a suitable implementation of traits
+
+**[#yellow] **#[derive(Debug)]**
+***_ Adds **fn fmt(&self, std::fmt::Formatter) -> Result**
+***_ Usable via **{:?}** format string
+
+**[#yellow] **#[derive(Deserialize)]**
+***_ + //serde = {version="1", features=["derive]"}//
+***_ + //serde_json="1"//
+***_ //serde_json::to_string(&obj).unwrap();//
+***_ //serde_json::from_string(&serialized).unwrap();//
+***_ See https://serde.rs/derive.html
+
+'-----------------------------
+'  Specal uses of rust
+'-----------------------------
+*[#orange] Rust Specials
+**:**Option<T>.as_deref()** converts to //Option<&T >//
+avoid string creation he says. T=String.;
+
+'-----------------------------
+*[#lightpink] Concerns
+**: Auto fill impl for traits
+ misc auto complete etc
+ Errors and guidance are sometimes 
+ incomprehensible;
+
+ ** JetBrains maybe way better than VSCode
+
+@endmindmap
+```

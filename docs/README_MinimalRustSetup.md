@@ -3,7 +3,7 @@ from https://www.rust-lang.org/tools/install
 
 `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh` and then respond to questions to install the default 
 
-# cargo aditions
+# cargo additions
 
  - `cargo install cargo-binstall`  _installs from source by compiling_
  - `cargo binstall cargo-watch` _much faster binary install_

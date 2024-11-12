@@ -1,0 +1,18 @@
+```plantuml
+@startmindmap
+* Text Output
+
+** Tracing
+***_ Debug output on console or log files
+***_ Lots of information to walk through events
+***_ **mostly for offline reading of logs**
+
+** Request  Logs
+***_ focused on errors and alerts
+***_ added in console logs
+***_:🌟 **usually surfaced in cloud monitoring alerts** 
+        and monitored with some cloud-native tool;
+
+***_ **flat, non-nested info** to allows for easy query
+@endmindmap
+```
