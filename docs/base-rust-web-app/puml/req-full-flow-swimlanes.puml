@@ -1,0 +1,73 @@
+```plantuml
+@startuml
+|a| Axum
+|#palegreen|mw_req_stamper| MW Request Stamper
+|#gold|mw_ctx_resolver| MW Ctx Resolver
+|#beige|mw_response_mapper| MW Response Mapper
+|#coral|r| Routes
+|#cyan|rc| MW Require Context
+
+
+|a|
+start
+
+:HTTP Request;
+:Axum Request;
+
+|mw_req_stamper|
+: **ReqStamp**
+   + UUID
+   + TimeStamp
+
+//Request//
+//→extensions//
+//→add( ReqStamp )//;
+
+|mw_ctx_resolver|
+:**validate web token**;
+:**create new token**
+  expiry = now + duration
+**set cookie**;
+:**create Ctx instance**
+**Wrap in CtxW instance**
+
+//Request//
+//→extensions//
+//→add( Result<CtxW> )//;
+
+|mw_response_mapper|
+|r|
+
+fork    
+    fork
+        :login;
+        fork again
+        :logout;    
+    end merge
+    fork again
+        :rpc;
+        |rc|
+        :extract Ctx;
+        if (have Ctx) then (route)    
+
+        |r|        
+        :/api/rpc/1..N;        
+
+    |rc|
+    else (fail auth)
+        :CtxExtError;
+    endif
+    |r|
+end merge
+
+|mw_response_mapper|
+ if (err) then (map error)
+   :server_error → **client_error**
+   server_error → **error code**;
+ endif   
+
+|a|
+:HTTP Response;
+stop
+@enduml
+```

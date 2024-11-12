@@ -1,0 +1,26 @@
+```plantuml
+@startmindmap
+* = Model
+** == Nomenclature
+*** **BMC** Backend Model Controller
+
+** Goals
+***: ModelController aka BMC exposed to clients
+**One ModelController instance**
+
+Implements CRUD and other data access methods on 
+model entities;
+
+***:ModelManager is crate private and contains 
+impl details
+ - DB pools
+ - Internal State
+
+**Many ModelManager instances** ?
+
+ModelManager passed as arg to all ModelController functions.
+
+Somewhat confusing name. Maybe //ModelControllerPrivate//;
+
+@endmindmap
+```

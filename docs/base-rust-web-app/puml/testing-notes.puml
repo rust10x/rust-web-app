@@ -1,0 +1,24 @@
+```plantuml
+@startmindmap
+* Unit Tests
+** Test at high granularity
+**[#lightpink] Mock impl of environment
+***_ mock db
+***_ etc
+***[#lightpink] Develop mock imple of surrunding ecosystem
+***[#lightpink]: Tests involve code path through 
+mocks which is never used in production;
+
+**[#lightgreen] Real impl of dependencies
+***_ local or staging k8s
+***_ actual environment but throaway
+***_ real CI/CD ArgoCD say
+***[#lightgreen] testing actual code paths 
+***[#lightgreen] testing actual environments
+***[#lightgreen]:higher infra costs, complexity
+but ultimately you do need a staging environment
+as close to prod environment as possible
+so this has to be done;
+
+@endmindmap
+``` 

@@ -1,0 +1,19 @@
+```plantuml
+@startuml
+start
+: _dev_utils::init_dev();
+note right
+ called from //main()//
+end note
+
+partition "As Root user" {
+    :create pool for root db;
+    :exec 00-sql file that needs root pool;
+    :drop root pool;
+}
+partition "As app user" {
+    :create pool for app user;
+    :exec remaining xx- sql files;
+}
+@enduml
+```

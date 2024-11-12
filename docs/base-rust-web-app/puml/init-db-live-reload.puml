@@ -1,0 +1,41 @@
+```plantuml
+@startmindmap
+*[#orange]  Development
+
+** Notes
+*** Don't use default user in postgres
+***:Get used to a custom //app_user// or similar user name
+avoid cost of refactoring later;
+***: Start IDs at 1000 to reserve earlier ones for 
+test, root etc as situations crop up;
+*** DB drop triggered by ?
+*** Login info under ?
+
+** Recreate Entire database
+***_ At the start, this is simple and saves dev time
+***_ Schema and data are small
+
+***://sql\dev_inital\00-recreate-db.sql//
+**run as db user**
+terminates all sessions
+drops db;
+
+***://sql\dev_inital\01-create-shema.sql//
+**run as app user** ??
+creates schema;
+
+***://sql\dev_inital\02-dev-seed-db.sql//
+**run as app user**
+starting seed data into db;
+
+** Recreate incrementally
+*** Get to this later as things evolve
+
+**[#yellow] Safety
+***:Hardcode dev db (dev_db.rs) to avoid
+these being used in staging/production
+PG_DEV_POSTGRES_URL
+PG_DEV_APP_URL;
+
+@endmindmap
+```

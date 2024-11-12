@@ -1,0 +1,39 @@
+```plantuml
+@startmindmap
+*[#yellow] Auth Token
+**[#lightpink]:Dont store anything beyond user-id and signatures
+Anything stored gives attack info;
+
+**[#lightgreen]: Token validity aside, handle revocations 
+ - Fetch ACLs from db
+ - Fetch token revocation from db;
+
+**:Hash key comes from config.toml
+see //tools/gen-key//;
+
+**[#lightgreen]:Store token-cookie as
+**httpOnly**
+so JS cannot access it
+**path="/"** making it global and sent to every request;
+
+**[#orange] mw_ctx_resolve
+***[#lightgreen] Middleware for **every** request
+*** extract //user_name, expiry, sig// from cookie
+***://based on user-name, get from db//
+
+UserForAuth
+ {
+    id: 1000,
+    username : "demo1",
+    token_salt : uuid
+ };
+
+***:validate cookie signature 
+using //token_salt, app_key//;
+
+*** check expiry against //now//
+***[#lightgreen]:extend expiry by small amount
+ - generate new token
+ - save new cookie;
+@endmindmap
+```

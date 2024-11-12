@@ -1,0 +1,52 @@
+```plantuml
+@startuml
+actor Client as user
+boundary "Web Server" as web
+participant auth
+participant UserBmc
+database DB
+database Config as cfg
+
+user -> web : **https** /api/login
+note over user, web
+{
+  username : "demo1"
+  pwd_clear: "welcome"
+}
+end note
+
+web -> auth
+
+auth -> UserBmc : first_by_username(..)
+UserBmc -> DB   : sql
+UserBmc <- DB   : row
+
+auth <- UserBmc
+note over auth, UserBmc
+{
+  // UserForLogin
+  id : 1000,
+  username: "demo1",
+  pwd : "#01#...",
+  pwd_salt : uuid.
+  token_salt: uuid,
+}
+end note
+auth -> cfg  : get_key()
+auth <- cfg  : KEY
+auth -> auth : pwd = ENCRYPT(pwd_clear, key, salt)
+auth -> auth : VALIDATE(pwd, user.pwd, key, salt)
+auth -> auth : CREATE_TOKEN(.., salt, key)
+
+web <- auth  : token
+user<- web : setCookie(token, httpOnly)
+note over user, web
+  {
+     username_b64u,
+     expiration_b64u
+     signature_b64u
+  }
+end note
+
+@enduml
+```

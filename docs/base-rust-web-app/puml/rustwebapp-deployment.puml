@@ -1,0 +1,34 @@
+```plantuml
+@startuml
+package app {
+    [web-service]
+    note top of [web-service]
+        PG_DEV_POSTGRES_URL
+        PG_DEV_APP_URL
+        SQL_RECREATE_DB_FILE_NAME
+        SQL_DIR
+        DEMO_PWD
+    end note
+    
+    [config.toml]
+    note left of [config.toml]
+        SERVICE_DB_URL
+        RUST_LOG
+    end note
+}
+
+[config.toml] -> [web-service]
+
+database postgres {    
+}
+
+note bottom of postgres
+    docker run --rm --name pg -p 5432:5432
+       -e POSTGRES_PASSWORD=welcome       
+       postgres:15
+end note
+
+[web-service] --> postgres
+
+@enduml
+```
