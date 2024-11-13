@@ -18,7 +18,8 @@ I like plantuml for their `component diagrams`, `sequence diagrams`, `activity d
    - `docker pull plantuml/plantuml-server:jetty`
    - `docker run -d --name plantuml -p 8181:8080 plantuml/plantuml-server:jetty` for initial container creation
    - `docker start plantuml` for subsequent starts of the previously created container
-   - In VSCode, use `http://localhost:8181/` as the PlantUML server URL.
+   - 👉 If using WSL, there is some magic that goes on. When you launch the plantuml server listening on 0.0.0.0:8181, this shows up at the **WSL host/Windows** level as localhost:8181 as well as localhost:8181 at the WSL distro level. This is because windows performs automatic port-mapping of WSL services to the host: and this is why, VSCode running on windows can access the plantuml server on WSL via `localhost:8181`.
+   - In VSCode, use `http://localhost:8181/` as the PlantUML server URL _(Sometimes, when this fails, 127.0.0.1:8181 works. Haven't looked into why)_.
 
 
 ### PlantUML in development
