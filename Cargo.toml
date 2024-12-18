@@ -27,10 +27,10 @@ members = [
 serde_with = {version = "3", features = ["time_0_3"] }
 # -- Data
 # Note: we lock modql version during rcs
-modql = { version = "0.4.0", features = ["with-sea-query"]}
-sqlx = { version = "0.7", features = [ "macros", "runtime-tokio", "postgres", "uuid" ] }
-sea-query = "0.31"
-sea-query-binder = { version = "0.6", features = ["sqlx-postgres", "with-uuid", "with-time" ] }
+modql = { version = "0.4.1", features = ["with-sea-query"]}
+sqlx = { version = "0.8", features = [ "macros", "runtime-tokio", "postgres", "uuid" ] }
+sea-query = "0.32"
+sea-query-binder = { version = "0.7", features = ["sqlx-postgres", "with-uuid", "with-time" ] }
 # -- JSON-RPC
 # Lock to specific version during 0.1.x
 rpc-router = { version = "=0.1.3" } 
