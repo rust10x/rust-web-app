@@ -34,6 +34,10 @@ sea-query-binder = { version = "0.7", features = ["sqlx-postgres", "with-uuid", 
 # -- JSON-RPC
 # Lock to specific version during 0.1.x
 rpc-router = { version = "=0.1.3" } 
+# -- Web
+axum = {version = "0.7", features = ["macros"]}
+tower-http = { version = "0.5", features = ["fs"] }
+tower-cookies = "0.10"
 # -- Others
 time = {version = "0.3", features = ["formatting", "parsing", "serde"]}
 derive_more = {version = "1.0.0-beta", features = ["from", "display"] }
