@@ -1,8 +1,8 @@
-use lib_rpc_core::prelude::*;
 use lib_core::model::conv::{
 	Conv, ConvBmc, ConvFilter, ConvForCreate, ConvForUpdate,
 };
 use lib_core::model::conv_msg::{ConvMsg, ConvMsgForCreate};
+use lib_rpc_core::prelude::*;
 
 pub fn rpc_router_builder() -> RouterBuilder {
 	router_builder!(
@@ -40,6 +40,7 @@ pub async fn add_conv_msg(
 }
 
 /// Returns conv_msg
+#[allow(unused)]
 pub async fn get_conv_msg(
 	ctx: Ctx,
 	mm: ModelManager,

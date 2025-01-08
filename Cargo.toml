@@ -8,7 +8,6 @@ members = [
     # -- Application Libraries
     "crates/libs/lib-utils",      # e.g., base64, time.
     "crates/libs/lib-rpc-core",   # e.g., core rpc utils (using rpc-router crate)
-    "crates/libs/lib-rpc-app",    # e.g., rpc handlers for app (using rpc-router crate)
     "crates/libs/lib-auth",       # e.g., for pwd, token.
     "crates/libs/lib-core",       # e.g., model, ctx, config.
     "crates/libs/lib-web",        # e.g., logging, common middleware etc
