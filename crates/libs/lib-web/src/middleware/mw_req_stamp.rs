@@ -1,5 +1,4 @@
 use crate::error::{Error, Result};
-use axum::async_trait;
 use axum::body::Body;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
@@ -32,7 +31,6 @@ pub async fn mw_req_stamp_resolver(
 }
 
 // region:    --- ReqStamp Extractor
-#[async_trait]
 impl<S: Send + Sync> FromRequestParts<S> for ReqStamp {
 	type Rejection = Error;
 

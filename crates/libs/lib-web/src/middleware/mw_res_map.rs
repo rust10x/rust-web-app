@@ -1,8 +1,8 @@
+use crate::error::{Error, Result};
+use crate::handlers::handlers_rpc::RpcInfo;
 use crate::log::log_request;
 use crate::middleware::mw_auth::CtxW;
 use crate::middleware::mw_req_stamp::ReqStamp;
-use crate::handlers::handlers_rpc::RpcInfo;
-use crate::error::Error;
 
 use axum::http::{Method, Uri};
 use axum::response::{IntoResponse, Response};
@@ -13,13 +13,13 @@ use tracing::debug;
 use uuid::Uuid;
 
 pub async fn mw_reponse_map(
-	ctx: Option<CtxW>,
+	ctx: Result<CtxW>, // Axum 0.8 does not seem to support Option anymore
 	uri: Uri,
 	req_method: Method,
 	req_stamp: ReqStamp,
 	res: Response,
 ) -> Response {
-	let ctx = ctx.map(|ctx| ctx.0);
+	let ctx = ctx.map(|ctx| ctx.0).ok();
 
 	debug!("{:<12} - mw_reponse_map", "RES_MAPPER");
 	let uuid = Uuid::new_v4();

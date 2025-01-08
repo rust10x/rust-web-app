@@ -14,7 +14,6 @@ use lib_web::routes::routes_static;
 
 use crate::web::routes_login;
 
-
 use axum::{middleware, Router};
 use lib_core::_dev_utils;
 use lib_core::model::ModelManager;
