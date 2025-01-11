@@ -27,8 +27,7 @@ pub async fn rpc_axum_handler(
 	let rpc_req = match rpc_router::Request::try_from(rpc_req) {
 		Ok(rpc_req) => rpc_req,
 		Err(rpc_req_error) => {
-			let res =
-				crate::error::Error::RpcRequestParsing(rpc_req_error).into_response();
+			let res = crate::Error::RpcRequestParsing(rpc_req_error).into_response();
 			return res;
 		}
 	};
