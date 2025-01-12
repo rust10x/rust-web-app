@@ -19,6 +19,7 @@ serde = { version = "1", features = ["derive"] }
 # -- Hashing (pwd-scheme01 & Token)
 hmac = "0.12"
 sha2 = "0.10"
+blake3 = "1.5.5"
 # -- Hashing (pwd-scheme02)
 argon2 = {version="0.5", features=["std"]}
 # -- Others

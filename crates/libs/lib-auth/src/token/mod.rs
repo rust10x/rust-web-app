@@ -5,10 +5,8 @@ mod error;
 pub use self::error::{Error, Result};
 
 use crate::config::auth_config;
-use hmac::{Hmac, Mac};
 use lib_utils::b64::{b64u_decode_to_string, b64u_encode};
 use lib_utils::time::{now_utc, now_utc_plus_sec_str, parse_utc};
-use sha2::Sha512;
 use std::fmt::Display;
 use std::str::FromStr;
 use uuid::Uuid;
@@ -134,17 +132,17 @@ fn _token_sign_into_b64u(
 ) -> Result<String> {
 	let content = format!("{}.{}", b64u_encode(ident), b64u_encode(exp));
 
-	// -- Create a HMAC-SHA-512 from key.
-	let mut hmac_sha512 = Hmac::<Sha512>::new_from_slice(key)
-		.map_err(|_| Error::HmacFailNewFromSlice)?;
+	// -- Create a Black3 Hasher (not from key because blake3 key is fixed length).
+	let mut hasher = blake3::Hasher::new();
 
 	// -- Add content.
-	hmac_sha512.update(content.as_bytes());
-	hmac_sha512.update(salt.as_bytes());
+	hasher.update(content.as_bytes());
+	hasher.update(salt.as_bytes());
+	hasher.update(key);
 
 	// -- Finalize and b64u encode.
-	let hmac_result = hmac_sha512.finalize();
-	let result_bytes = hmac_result.into_bytes();
+	let hmac_result = hasher.finalize();
+	let result_bytes = hmac_result.as_bytes();
 	let result = b64u_encode(result_bytes);
 
 	Ok(result)
