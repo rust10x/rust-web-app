@@ -199,7 +199,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_validate_web_token_ok() -> Result<()> {
+	fn test_token_validate_web_token_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let fx_user = "user_one";
 		let fx_salt =
@@ -219,7 +219,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_validate_web_token_err_expired() -> Result<()> {
+	fn test_token_validate_web_token_err_expired() -> Result<()> {
 		// -- Setup & Fixtures
 		let fx_user = "user_one";
 		let fx_salt =
