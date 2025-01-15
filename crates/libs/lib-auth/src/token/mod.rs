@@ -64,12 +64,12 @@ impl Display for Token {
 
 pub fn generate_web_token(user: &str, salt: Uuid) -> Result<Token> {
 	let config = &auth_config();
-	_generate_token(user, config.TOKEN_DURATION_SEC, salt, &config.TOKEN_KEY)
+	generate_token(user, config.TOKEN_DURATION_SEC, salt, &config.TOKEN_KEY)
 }
 
 pub fn validate_web_token(origin_token: &Token, salt: Uuid) -> Result<()> {
 	let config = &auth_config();
-	_validate_token_sign_and_exp(origin_token, salt, &config.TOKEN_KEY)?;
+	validate_token_sign_and_exp(origin_token, salt, &config.TOKEN_KEY)?;
 
 	Ok(())
 }
@@ -78,7 +78,7 @@ pub fn validate_web_token(origin_token: &Token, salt: Uuid) -> Result<()> {
 
 // region:    --- (private) Token Gen and Validation
 
-fn _generate_token(
+fn generate_token(
 	ident: &str,
 	duration_sec: f64,
 	salt: Uuid,
@@ -89,7 +89,7 @@ fn _generate_token(
 	let exp = now_utc_plus_sec_str(duration_sec);
 
 	// -- Sign the two first components.
-	let sign_b64u = _token_sign_into_b64u(&ident, &exp, salt, key)?;
+	let sign_b64u = token_sign_into_b64u(&ident, &exp, salt, key)?;
 
 	Ok(Token {
 		ident,
@@ -98,14 +98,14 @@ fn _generate_token(
 	})
 }
 
-fn _validate_token_sign_and_exp(
+fn validate_token_sign_and_exp(
 	origin_token: &Token,
 	salt: Uuid,
 	key: &[u8],
 ) -> Result<()> {
 	// -- Validate signature.
 	let new_sign_b64u =
-		_token_sign_into_b64u(&origin_token.ident, &origin_token.exp, salt, key)?;
+		token_sign_into_b64u(&origin_token.ident, &origin_token.exp, salt, key)?;
 
 	if new_sign_b64u != origin_token.sign_b64u {
 		return Err(Error::SignatureNotMatching);
@@ -124,7 +124,7 @@ fn _validate_token_sign_and_exp(
 
 /// Create token signature from token parts
 /// and salt.
-fn _token_sign_into_b64u(
+fn token_sign_into_b64u(
 	ident: &str,
 	exp: &str,
 	salt: Uuid,
@@ -206,8 +206,7 @@ mod tests {
 			Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453").unwrap();
 		let fx_duration_sec = 0.02; // 20ms
 		let token_key = &auth_config().TOKEN_KEY;
-		let fx_token =
-			_generate_token(fx_user, fx_duration_sec, fx_salt, token_key)?;
+		let fx_token = generate_token(fx_user, fx_duration_sec, fx_salt, token_key)?;
 
 		// -- Exec
 		thread::sleep(Duration::from_millis(10));
@@ -227,8 +226,7 @@ mod tests {
 			Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453").unwrap();
 		let fx_duration_sec = 0.01; // 10ms
 		let token_key = &auth_config().TOKEN_KEY;
-		let fx_token =
-			_generate_token(fx_user, fx_duration_sec, fx_salt, token_key)?;
+		let fx_token = generate_token(fx_user, fx_duration_sec, fx_salt, token_key)?;
 
 		// -- Exec
 		thread::sleep(Duration::from_millis(20));
