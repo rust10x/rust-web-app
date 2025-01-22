@@ -20,6 +20,8 @@ use sqlx::FromRow;
 pub struct Agent {
 	pub id: i64,
 
+	pub org_id: Option<i64>,
+
 	// -- Relations
 	pub owner_id: i64,
 
