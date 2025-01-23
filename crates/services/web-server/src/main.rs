@@ -41,9 +41,13 @@ async fn main() -> Result<()> {
 	let routes_rpc = web::routes_rpc::routes(mm.clone())
 		.route_layer(middleware::from_fn(mw_ctx_require));
 
+	let routes_rpc2 = web::routes_rpc::routes_2(mm.clone())
+		.route_layer(middleware::from_fn(mw_ctx_require));
+
 	let routes_all = Router::new()
 		.merge(routes_login::routes(mm.clone()))
 		.nest("/api", routes_rpc)
+		.merge(routes_rpc2)
 		.layer(middleware::map_response(mw_reponse_map))
 		.layer(middleware::from_fn_with_state(mm.clone(), mw_ctx_resolver))
 		.layer(CookieManagerLayer::new())

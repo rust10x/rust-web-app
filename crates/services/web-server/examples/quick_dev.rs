@@ -21,9 +21,12 @@ async fn main() -> Result<()> {
 	);
 	req_login.await?.print().await?;
 
+	hc.do_post("/api/orgs/rpc", json!({"method": "org_list"}))
+		.await?;
+
 	// -- Create Agent
 	let req_create_agent = hc.do_post(
-		"/api/rpc",
+		"/api/org/100/rpc", // "/api/org/_org_id_/rpc"
 		json!({
 			"jsonrpc": "2.0",
 			"id": 1,

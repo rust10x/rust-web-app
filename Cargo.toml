@@ -1,6 +1,6 @@
 [workspace.lints.rust]
 unsafe_code = "forbid"
-# unused = { level = "allow", priority = -1 } # For exploratory dev.
+unused = { level = "allow", priority = -1 } # For exploratory dev.
 
 [workspace]
 resolver = "2"
@@ -40,3 +40,4 @@ tower-cookies = "0.11"
 # -- Others
 time = {version = "0.3", features = ["formatting", "parsing", "serde"]}
 derive_more = {version = "1.0.0-beta", features = ["from", "display"] }
+lazy-regex = "3.4.1"

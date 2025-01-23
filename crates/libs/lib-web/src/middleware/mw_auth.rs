@@ -1,11 +1,12 @@
 use crate::error::{Error, Result};
 use crate::utils::token::{set_token_cookie, AUTH_TOKEN};
 use axum::body::Body;
-use axum::extract::{FromRequestParts, State};
+use axum::extract::{FromRequestParts, Path, State};
 use axum::http::request::Parts;
 use axum::http::Request;
 use axum::middleware::Next;
 use axum::response::Response;
+use lazy_regex::regex_captures;
 use lib_auth::token::{validate_web_token, Token};
 use lib_core::ctx::Ctx;
 use lib_core::model::user::{UserBmc, UserForAuth};
@@ -38,8 +39,8 @@ pub async fn mw_ctx_resolver(
 	next: Next,
 ) -> Response {
 	debug!("{:<12} - mw_ctx_resolve", "MIDDLEWARE");
-
-	let ctx_ext_result = ctx_resolve(mm, &cookies).await;
+	let path = req.uri().path();
+	let ctx_ext_result = ctx_resolve(mm, path, &cookies).await;
 
 	if ctx_ext_result.is_err()
 		&& !matches!(ctx_ext_result, Err(CtxExtError::TokenNotInCookie))
@@ -54,7 +55,11 @@ pub async fn mw_ctx_resolver(
 	next.run(req).await
 }
 
-async fn ctx_resolve(mm: ModelManager, cookies: &Cookies) -> CtxExtResult {
+async fn ctx_resolve(
+	mm: ModelManager,
+	path: &str,
+	cookies: &Cookies,
+) -> CtxExtResult {
 	// -- Get Token String
 	let token = cookies
 		.get(AUTH_TOKEN)
@@ -80,10 +85,27 @@ async fn ctx_resolve(mm: ModelManager, cookies: &Cookies) -> CtxExtResult {
 		.map_err(|_| CtxExtError::CannotSetTokenCookie)?;
 
 	// -- Create CtxExtResult
-	Ctx::new(user.id)
+
+	println!("->> PATH ... {path:?}");
+	let org_id = extract_org_id(path);
+	println!("->> org_id {org_id:?}");
+	Ctx::new(user.id, org_id)
 		.map(CtxW)
 		.map_err(|ex| CtxExtError::CtxCreateFail(ex.to_string()))
 }
+
+// region:    --- Support
+
+// Returns: None if not found, the i64 if found, error if found but not number
+fn extract_org_id(path: &str) -> Option<i64> {
+	if let Some((_, org_number)) = regex_captures!(r#"^/api/org/(\d+)/rpc$"#, path) {
+		org_number.parse::<i64>().ok()
+	} else {
+		None
+	}
+}
+
+// endregion: --- Support
 
 // region:    --- Ctx Extractor
 #[derive(Debug, Clone)]

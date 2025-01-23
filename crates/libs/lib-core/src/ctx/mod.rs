@@ -11,6 +11,8 @@ pub use self::error::{Error, Result};
 pub struct Ctx {
 	user_id: i64,
 
+	org_id: Option<i64>,
+
 	/// Note: For the future ACS (Access Control System)
 	conv_id: Option<i64>,
 }
@@ -20,16 +22,18 @@ impl Ctx {
 	pub fn root_ctx() -> Self {
 		Ctx {
 			user_id: 0,
+			org_id: None,
 			conv_id: None,
 		}
 	}
 
-	pub fn new(user_id: i64) -> Result<Self> {
+	pub fn new(user_id: i64, org_id: Option<i64>) -> Result<Self> {
 		if user_id == 0 {
 			Err(Error::CtxCannotNewRootCtx)
 		} else {
 			Ok(Self {
 				user_id,
+				org_id,
 				conv_id: None,
 			})
 		}

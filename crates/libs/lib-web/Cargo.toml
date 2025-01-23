@@ -30,6 +30,7 @@ time = { workspace = true }
 uuid = {version = "1", features = ["v4","fast-rng",]}
 strum_macros = "0.26"
 derive_more = { workspace = true }
+lazy-regex = { workspace = true }
 
 [lints]
 workspace = true

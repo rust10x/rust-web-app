@@ -3,6 +3,9 @@ name = "web-server"
 version = "0.1.0"
 edition = "2021"
 
+[lints]
+workspace = true
+
 [dependencies]
 # -- App Libs
 lib-utils = { path = "../../libs/lib-utils"}
