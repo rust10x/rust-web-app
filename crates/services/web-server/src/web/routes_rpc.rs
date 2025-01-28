@@ -20,7 +20,7 @@ pub fn routes(mm: ModelManager) -> Router {
 		.with_state(rpc_router)
 }
 
-pub fn routes_2(mm: ModelManager) -> Router {
+pub fn api_org_routes(mm: ModelManager) -> Router {
 	// Build the combined Rpc Router (from `rpc-router` crate)
 	let rpc_router = all_rpc_router_builder()
 		// Add the common resources for all rpc calls

@@ -59,7 +59,7 @@ async fn ctx_resolve(
 	mm: ModelManager,
 	path: &str,
 	cookies: &Cookies,
-) -> CtxExtResult {
+) -> CtxExtResult<CtxW> {
 	// -- Get Token String
 	let token = cookies
 		.get(AUTH_TOKEN)
@@ -86,26 +86,50 @@ async fn ctx_resolve(
 
 	// -- Create CtxExtResult
 
-	println!("->> PATH ... {path:?}");
-	let org_id = extract_org_id(path);
-	println!("->> org_id {org_id:?}");
+	let org_id = process_org_id(&mm, path).await?;
+
 	Ctx::new(user.id, org_id)
 		.map(CtxW)
 		.map_err(|ex| CtxExtError::CtxCreateFail(ex.to_string()))
 }
 
-// region:    --- Support
+// region:    --- Org Validation
+
+async fn process_org_id(mm: &ModelManager, path: &str) -> CtxExtResult<Option<i64>> {
+	extract_org_id(path)
+}
 
 // Returns: None if not found, the i64 if found, error if found but not number
-fn extract_org_id(path: &str) -> Option<i64> {
-	if let Some((_, org_number)) = regex_captures!(r#"^/api/org/(\d+)/rpc$"#, path) {
+fn extract_org_id(path: &str) -> CtxExtResult<Option<i64>> {
+	// TODO: Make it more elegant
+	// -- If multi orgs, then, ok to return none
+	if path.starts_with("/api/orgs/") {
+		return Ok(None);
+	}
+
+	// -- FIXME: TEMPORARY - remove when org is full implemented
+	if path.starts_with("/api/rpc") {
+		return Ok(None);
+	}
+
+	// -- otherwise, must have an org id path
+	let org_id = if let Some((_, org_number)) =
+		regex_captures!(r#"^/api/org/(\d+)/rpc$"#, path)
+	{
 		org_number.parse::<i64>().ok()
 	} else {
 		None
-	}
+	};
+
+	// at this point we must have org_id
+	let org_id = org_id.ok_or_else(|| CtxExtError::OrgIdInvalid {
+		path: path.to_string(),
+	})?;
+
+	Ok(Some(org_id))
 }
 
-// endregion: --- Support
+// endregion: --- Org Validation
 
 // region:    --- Ctx Extractor
 #[derive(Debug, Clone)]
@@ -119,7 +143,7 @@ impl<S: Send + Sync> FromRequestParts<S> for CtxW {
 
 		parts
 			.extensions
-			.get::<CtxExtResult>()
+			.get::<CtxExtResult<CtxW>>()
 			.ok_or(Error::CtxExt(CtxExtError::CtxNotInRequestExt))?
 			.clone()
 			.map_err(Error::CtxExt)
@@ -128,12 +152,17 @@ impl<S: Send + Sync> FromRequestParts<S> for CtxW {
 // endregion: --- Ctx Extractor
 
 // region:    --- Ctx Extractor Result/Error
-type CtxExtResult = core::result::Result<CtxW, CtxExtError>;
+type CtxExtResult<T> = core::result::Result<T, CtxExtError>;
 
 #[derive(Clone, Serialize, Debug)]
 pub enum CtxExtError {
 	TokenNotInCookie,
 	TokenWrongFormat,
+
+	// -- Returned from ctx_resolve
+	OrgIdInvalid { path: String },
+	OrgIdNotFound(i64),
+	OrgIdNoAccess { user_id: i64, org_id: i64 },
 
 	UserNotFound,
 	ModelAccessError(String),

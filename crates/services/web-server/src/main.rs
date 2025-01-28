@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
 	let routes_rpc = web::routes_rpc::routes(mm.clone())
 		.route_layer(middleware::from_fn(mw_ctx_require));
 
-	let routes_rpc2 = web::routes_rpc::routes_2(mm.clone())
+	let routes_rpc2 = web::routes_rpc::api_org_routes(mm.clone())
 		.route_layer(middleware::from_fn(mw_ctx_require));
 
 	let routes_all = Router::new()
