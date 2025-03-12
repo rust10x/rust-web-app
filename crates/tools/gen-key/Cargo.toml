@@ -7,4 +7,4 @@ edition = "2021"
 # -- App Crates
 lib-utils = { path = "../../libs/lib-utils"}
 # -- Others
-rand = "0.8"
+rand = "0.9"
