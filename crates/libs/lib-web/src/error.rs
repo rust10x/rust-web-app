@@ -45,7 +45,7 @@ pub enum Error {
 	// -- RpcError (deconstructed from rpc_router::Error)
 	// Simple mapping for the RpcRequestParsingError. It will have the eventual id, method context.
 	#[from]
-	RpcRequestParsing(rpc_router::RequestParsingError),
+	RpcRequestParsing(rpc_router::RpcRequestParsingError),
 
 	// When encountering `rpc_router::Error::Handler`, we deconstruct it into the appropriate concrete application error types.
 	RpcLibRpc(lib_rpc_core::Error),
@@ -96,7 +96,11 @@ impl From<rpc_router::CallError> for Error {
 					Error::RpcHandlerErrorUnhandled(type_name)
 				}
 			}
-			error => Error::RpcRouter { id, method, error },
+			error => Error::RpcRouter {
+				id: id.to_value(),
+				method,
+				error,
+			},
 		}
 	}
 }
