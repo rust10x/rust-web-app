@@ -84,16 +84,17 @@ impl From<rpc_router::CallError> for Error {
 		let rpc_router::CallError { id, method, error } = call_error;
 		match error {
 			rpc_router::Error::Handler(mut rpc_handler_error) => {
-				if let Some(lib_rpc_error) =
-					rpc_handler_error.remove::<lib_rpc_core::Error>()
-				{
-					Error::RpcLibRpc(lib_rpc_error)
-				}
-				// report the unhandled error for debugging and completing code.
-				else {
-					let type_name = rpc_handler_error.type_name();
-					warn!("Unhandled RpcHandlerError type: {type_name}");
-					Error::RpcHandlerErrorUnhandled(type_name)
+				match rpc_handler_error.remove::<lib_rpc_core::Error>() {
+					Some(lib_rpc_core::Error::Model(model_error)) => {
+						Error::Model(model_error)
+					}
+					Some(lib_rpc_error) => Error::RpcLibRpc(lib_rpc_error),
+					// report the unhandled error for debugging and completing code.
+					None => {
+						let type_name = rpc_handler_error.type_name();
+						warn!("Unhandled RpcHandlerError type: {type_name}");
+						Error::RpcHandlerErrorUnhandled(type_name)
+					}
 				}
 			}
 			error => Error::RpcRouter {
