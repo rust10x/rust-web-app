@@ -10,8 +10,9 @@ pub enum Error {
 	TxnCantCommitNoOpenTxn,
 	CannotBeginTxnWithTxnFalse,
 	CannotCommitTxnWithTxnFalse,
+	CannotRollbackTxnWithTxnFalse,
 	NoTxn,
-
+	TxnRolledBackByNested,
 	// -- Externals
 	#[from]
 	Sqlx(#[serde_as(as = "DisplayFromStr")] sqlx::Error),
