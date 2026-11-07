@@ -34,11 +34,18 @@ impl Dbx {
 struct TxnHolder {
 	txn: Transaction<'static, Postgres>,
 	counter: i32,
+	/// Set when a nested level rolled back: the outer commit must not
+	/// commit the half-done work, so it rolls back instead.
+	rollback_only: bool,
 }
 
 impl TxnHolder {
 	fn new(txn: Transaction<'static, Postgres>) -> Self {
-		TxnHolder { txn, counter: 1 }
+		TxnHolder {
+			txn,
+			counter: 1,
+			rollback_only: false,
+		}
 	}
 
 	fn inc(&mut self) {
@@ -86,11 +93,18 @@ impl Dbx {
 	}
 
 	pub async fn rollback_txn(&self) -> Result<()> {
+		if !self.with_txn {
+			return Err(Error::CannotRollbackTxnWithTxnFalse);
+		}
+
 		let mut txh_g = self.txn_holder.lock().await;
 		if let Some(mut txn_holder) = txh_g.take() {
 			// Take the TxnHolder out of the Option
 			if txn_holder.counter > 1 {
 				txn_holder.counter -= 1;
+				// A nested rollback can't undo only its own part (no savepoints),
+				// so mark the whole txn: the outer commit will roll back instead.
+				txn_holder.rollback_only = true;
 				let _ = txh_g.replace(txn_holder); // Put it back if not the last reference
 			} else {
 				// Perform the actual rollback
@@ -116,6 +130,11 @@ impl Dbx {
 			if counter == 0 {
 				// here we take the txh out of the option
 				if let Some(txn) = txh_g.take() {
+					// A nested level rolled back: don't commit its half-done work.
+					if txn.rollback_only {
+						txn.txn.rollback().await?;
+						return Err(Error::TxnRolledBackByNested);
+					}
 					txn.txn.commit().await?;
 				} // TODO: Might want to add a warning on the else.
 			} // TODO: Might want to add a warning on the else.
@@ -126,6 +145,11 @@ impl Dbx {
 		else {
 			Err(Error::TxnCantCommitNoOpenTxn)
 		}
+	}
+
+	/// True for a `ModelManager::new_with_txn()` Dbx.
+	pub fn with_txn(&self) -> bool {
+		self.with_txn
 	}
 
 	pub fn db(&self) -> &Pool<Postgres> {

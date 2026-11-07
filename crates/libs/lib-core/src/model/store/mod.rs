@@ -2,6 +2,8 @@
 
 pub(in crate::model) mod dbx;
 
+use std::time::Duration;
+
 use crate::core_config;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
@@ -9,6 +11,7 @@ use sqlx::{Pool, Postgres};
 // endregion: --- Modules
 
 pub type Db = Pool<Postgres>;
+const ACQUIRE_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub async fn new_db_pool() -> sqlx::Result<Db> {
 	// * See NOTE 1) below
@@ -16,6 +19,7 @@ pub async fn new_db_pool() -> sqlx::Result<Db> {
 
 	PgPoolOptions::new()
 		.max_connections(max_connections)
+		.acquire_timeout(ACQUIRE_TIMEOUT)
 		.connect(&core_config().DB_URL)
 		.await
 }
