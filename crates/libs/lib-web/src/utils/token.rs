@@ -1,4 +1,3 @@
-
 pub use crate::error::ClientError;
 pub use crate::error::{Error, Result};
 use lib_auth::token::generate_web_token;
@@ -9,7 +8,11 @@ use uuid::Uuid;
 
 pub(crate) const AUTH_TOKEN: &str = "auth-token";
 
-pub(crate) fn set_token_cookie(cookies: &Cookies, user: &str, salt: Uuid) -> Result<()> {
+pub(crate) fn set_token_cookie(
+	cookies: &Cookies,
+	user: &str,
+	salt: Uuid,
+) -> Result<()> {
 	let token = generate_web_token(user, salt)?;
 
 	let mut cookie = Cookie::new(AUTH_TOKEN, token.to_string());

@@ -11,7 +11,6 @@ pub fn serve_dir(web_folder: &'static String) -> MethodRouter {
 	}
 
 	any_service(
-		ServeDir::new(web_folder)
-			.not_found_service(handle_404.into_service()),
+		ServeDir::new(web_folder).not_found_service(handle_404.into_service()),
 	)
 }

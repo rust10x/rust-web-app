@@ -1,7 +1,7 @@
-use lib_rpc_core::prelude::*;
 use lib_core::model::agent::{
 	Agent, AgentBmc, AgentFilter, AgentForCreate, AgentForUpdate,
 };
+use lib_rpc_core::prelude::*;
 
 pub fn rpc_router_builder() -> RouterBuilder {
 	router_builder!(
